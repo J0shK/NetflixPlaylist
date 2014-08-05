@@ -1,0 +1,56 @@
+#netflix-randomizer-toolbar-button {
+	list-style-image: URL("chrome://netflixrandomizer/skin/toolbar-off.gif");
+}
+
+#netflix-randomizer-toolbar-button-on {
+	list-style-image: URL("chrome://netflixrandomizer/skin/toolbar-on.gif");
+}
+
+#netflix-randomizer-status-bar-icon {
+	width: 83px;
+	margin: 0 5px;
+}
+
+.netflix-randomizer-selected {
+	outline: 2px solid red !important;
+}
+
+#addToPlaylistButton {
+	list-style-image:url("down-arrow.png");
+}
+
+.currently-playing {
+	font-weight:bold;
+}
+
+#vbox1 {
+	overflow:auto;
+	height:	300px;
+}
+
+
+
+.addList {
+    float: left;
+    width: 90px;
+}
+
+.addVid {
+    float: left;
+    height: 33px;
+    margin-left: 20px;
+    padding-top: 7px;
+    width: 76px;
+    background-color: #B9090B;
+    border: 3px solid #FFFFFF;
+    color: white;
+    text-align: center;
+}
+.episodeList {
+    float: left;
+    width: 573px;
+}
+
+#episodeColumn ul.episodeList li {
+    width: 573px;
+}

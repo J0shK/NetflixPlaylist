@@ -1,0 +1,7 @@
+<!ENTITY runnetflixrandomizer "Toggle Netflix Playlist">
+
+<!ENTITY netflixrandomizer.title "Netflix Playlist">
+<!ENTITY netflixrandomizer.tableTitleOnPage "Scanned Videos (Queue)">
+<!ENTITY netflixrandomizer.tableTitlePlaylist "My Playlist">
+<!ENTITY openNRSidebar.commandkey "N">
+<!ENTITY openNRSidebar.modifierskey "shift accel">

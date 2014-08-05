@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css" ?>
+<?xml-stylesheet href="chrome://netflixrandomizer/skin/skin.css" type="text/css" ?>
+<!DOCTYPE page SYSTEM "chrome://netflixrandomizer/locale/translations.dtd">
+
+<page id="nrSidebar" title="&netflixrandomizer.title;"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" >
+		 
+		 <script src="sidebar.js" />
+<stack>
+  <vbox id="vbox1" flex="1">
+  	  <hbox id="buttonbox1" flex="1">
+		<button label="Shuffle" oncommand="unavail();"/>
+		<button label="Play" oncommand="playVid();"/>
+	  </hbox>
+      <spacer height="20"/>
+	  <label value="&netflixrandomizer.tableTitleOnPage;" />
+	  <hbox id="buttonbox2" flex="1">
+		<button label="Clear Queue" oncommand="resetOnPage();"/>
+		<!--<button label="Clear" oncommand="clearSidebar();"/>-->
+		<!--<button label="Refresh" oncommand="updatePlaylist();"/>-->
+		<!--<button label="Force Re-scan" oncommand="scanPage();"/>-->
+	  </hbox>
+      <listbox id="listbox1" minwidth="300" maxwidth="900" rows="9" seltype="multiple">
+        <listhead id="list-header">
+          <listheader label="#"/>
+		  <listheader label="name"/>
+		  <listheader label="series"/>
+		  <listheader label="season"/>
+        </listhead>
+		  <listcols>
+    		<listcol/>
+			<listcol/>
+    		<listcol flex="1" />
+			<listcol/>
+  		  </listcols>
+	  </listbox>
+	  <button id="addToPlaylistButton" label="" oncommand="addToPlaylist();"/>
+	  <label value="&netflixrandomizer.tableTitlePlaylist;" />
+	  <hbox id="buttonbox3" flex="1">
+		<button label="Select All" oncommand="selectAll();"/>
+		<button label="Remove" oncommand="removeFromPlaylist();"/>
+		<button label="Reset Playlist" oncommand="resetPlaylist();"/>
+	  </hbox>
+	  <listbox id="listbox2" minwidth="300" maxwidth="900" rows="9" seltype="multiple">
+        <listhead id="list-header">
+          <listheader label="#"/>
+		  <listheader label="name"/>
+		  <listheader label="series"/>
+		  <listheader label="season"/>
+        </listhead>
+		  <listcols>
+    		<listcol/>
+			<listcol/>
+    		<listcol flex="1" />
+			<listcol/>
+  		  </listcols>
+    </listbox>
+	<hbox id="buttonbox4" flex="1">
+		<label value="sort" />
+		<button label="up" oncommand="unavail();"/>
+		<button label="down" oncommand="unavail();"/>
+	</hbox>
+  </vbox>
+</stack>
+</page>

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://netflixrandomizer/skin/skin.css" type="text/css"?>
+<!DOCTYPE netflixrandomizer SYSTEM "chrome://netflixrandomizer/locale/translations.dtd">
+<overlay id="sample" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:HTML="http://www.w3.org/1999/xhtml">
+	
+		<script src="browserhelpers.js" />
+		<script src="netflixRandomizer.js" />
+
+		<menupopup id="menu_ToolsPopup">
+			<!--<menuitem label="&runnetflixrandomizer;" key="netflix-randomizer-run-key" oncommand="toggleSidebar('viewNRSidebar')"/>-->
+			<menuitem key="key_openNRSidebar" observes="viewNRSidebar"  />
+		</menupopup>
+
+		<keyset>
+
+			<key id="netflix-randomizer-run-key" modifiers="accel alt shift" key="R" oncommand="netflixRandomizer.scanPage()"/>
+			<key id="key_openNRSidebar" command="viewNRSidebar" key="&openNRSidebar.commandkey;"  modifiers="&openNRSidebar.modifierskey;" />
+		</keyset>
+
+		<!--<statusbar id="status-bar">
+			<statusbarpanel id="netflix-randomizer-status-bar-icon" class="statusbarpanel-iconic" src="chrome://netflixrandomizer/skin/status-bar.png" tooltiptext="&runnetflixrandomizer;" onclick="toggleSidebar('viewNRSidebar')" />
+		</statusbar>-->
+
+		<toolbarpalette id="BrowserToolbarPalette">
+			<toolbarbutton id="netflix-randomizer-toolbar-button" label="Random Netflix" tooltiptext="&runnetflixrandomizer;" oncommand="toggleSidebar('viewNRSidebar')" />
+		</toolbarpalette>
+  
+  <broadcasterset id="mainBroadcasterSet"> 
+    <broadcaster id="viewNRSidebar" 
+                 label="&netflixrandomizer.title;"
+                 autoCheck="false"
+                 type="checkbox"
+                 group="sidebar"
+                 sidebarurl="chrome://netflixrandomizer/content/sidebar.xul"
+                 sidebartitle="&netflixrandomizer.title;"
+                 oncommand="toggleSidebar('viewNRSidebar');" />
+  </broadcasterset>
+		
+</overlay>
