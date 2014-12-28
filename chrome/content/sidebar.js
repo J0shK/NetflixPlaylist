@@ -42,11 +42,11 @@ function selectAll() {
 }
 
 function clearSidebar() {
-	var sidebarOnPage = document.getElementById("listbox1");
-	var listItems = sidebarOnPage.getElementsByTagName("listitem");
-	for (var i = 0, num = listItems.length; i < num; i++){
-		listItems[0].parentNode.removeChild(listItems[0]);
-	}
+	// var sidebarOnPage = document.getElementById("listbox1");
+	// var listItems = sidebarOnPage.getElementsByTagName("listitem");
+	// for (var i = 0, num = listItems.length; i < num; i++){
+	// 	listItems[0].parentNode.removeChild(listItems[0]);
+	// }
 	
 	var sidebarPlaylist = document.getElementById("listbox2");
 	var listItems = sidebarPlaylist.getElementsByTagName("listitem");
@@ -58,46 +58,46 @@ function clearSidebar() {
 function updatePlaylist() {
 			clearSidebar();
 			//dump("START playlist update \n");
-			var sidebarOnPage = document.getElementById("listbox1");
+			// var sidebarOnPage = document.getElementById("listbox1");
 			var sidebarPlaylist = document.getElementById("listbox2");
 			
 			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
 			var mDBConn = Services.storage.openDatabase(file);
 			
-			var statement = mDBConn.createStatement("SELECT * FROM onpage");
+// 			var statement = mDBConn.createStatement("SELECT * FROM onpage");
 		
-			//dump("got vbox1 \n");
-			var i = 1;
-			try{
-			while(statement.executeStep()){
-				var name = statement.getString(5);
-				name = name.replace(/\\/g, "");
-				var li = createSidebarItem("listitem");
-				li.setAttribute("id",statement.getString(0));
-				li.setAttribute("class",statement.getString(1));
-				li.setAttribute("url",statement.getString(6));
-//				li.setAttribute("ep",statement.getString(4));
-//				li.setAttribute("name",statement.getString(name));
-//				li.setAttribute("title",statement.getString(2));
-//				li.setAttribute("season",statement.getString(3));
-        		var l1 = createSidebarItem("listcell");
-				l1.setAttribute("label",statement.getString(4));
-        		li.appendChild(l1);
-        		var l2 = createSidebarItem("listcell");
-				l2.setAttribute("label",name);
-        		li.appendChild(l2);
-        		var l3 = createSidebarItem("listcell");
-				l3.setAttribute("label",statement.getString(2));
-        		li.appendChild(l3);
-        		var l4 = createSidebarItem("listcell");
-				l4.setAttribute("label",statement.getString(3));
-        		li.appendChild(l4);
-				sidebarOnPage.appendChild(li);
-				i++;
-			}
-			}finally{
-				statement.reset();
-			}
+// 			//dump("got vbox1 \n");
+// 			var i = 1;
+// 			try{
+// 			while(statement.executeStep()){
+// 				var name = statement.getString(5);
+// 				name = name.replace(/\\/g, "");
+// 				var li = createSidebarItem("listitem");
+// 				li.setAttribute("id",statement.getString(0));
+// 				li.setAttribute("class",statement.getString(1));
+// 				li.setAttribute("url",statement.getString(6));
+// //				li.setAttribute("ep",statement.getString(4));
+// //				li.setAttribute("name",statement.getString(name));
+// //				li.setAttribute("title",statement.getString(2));
+// //				li.setAttribute("season",statement.getString(3));
+//         		var l1 = createSidebarItem("listcell");
+// 				l1.setAttribute("label",statement.getString(4));
+//         		li.appendChild(l1);
+//         		var l2 = createSidebarItem("listcell");
+// 				l2.setAttribute("label",name);
+//         		li.appendChild(l2);
+//         		var l3 = createSidebarItem("listcell");
+// 				l3.setAttribute("label",statement.getString(2));
+//         		li.appendChild(l3);
+//         		var l4 = createSidebarItem("listcell");
+// 				l4.setAttribute("label",statement.getString(3));
+//         		li.appendChild(l4);
+// 				sidebarOnPage.appendChild(li);
+// 				i++;
+// 			}
+// 			}finally{
+// 				statement.reset();
+// 			}
 			
 			var statement2 = mDBConn.createStatement("SELECT * FROM playlist");
 			var statement3 = mDBConn.createStatement("SELECT cvid FROM status");
@@ -254,17 +254,17 @@ var playlist = {
     onLoad: function(e) {
 		window.top.document.getElementById("netflix-randomizer-toolbar-button").id = "netflix-randomizer-toolbar-button-on";
         //alert('load');
-		var sidebarOnPage = document.getElementById("listbox1");
-		sidebarOnPage.addEventListener("dblclick", function(event)
-		{
-		  var target = event.target;
-		  while (target && target.localName != "listitem")
-			target = target.parentNode;
-		  if (!target)
-			return;   // Event target isn't a list item
+		// var sidebarOnPage = document.getElementById("listbox1");
+		// sidebarOnPage.addEventListener("dblclick", function(event)
+		// {
+		//   var target = event.target;
+		//   while (target && target.localName != "listitem")
+		// 	target = target.parentNode;
+		//   if (!target)
+		// 	return;   // Event target isn't a list item
 		
-		  addToPlaylist();
-		}, false);
+		//   addToPlaylist();
+		// }, false);
 		
 		var sidebarPlaylist = document.getElementById("listbox2");
 		sidebarPlaylist.addEventListener("dblclick", function(event)
@@ -289,6 +289,9 @@ var playlist = {
 		window.top.document.getElementById("netflix-randomizer-toolbar-button-on").id = "netflix-randomizer-toolbar-button";
     }
 }
+
+mainWindow.document.addEventListener("UpdateSidebar", function(e) { updatePlaylist(); }, false, true);
+// The last value is a Mozilla-specific value to indicate untrusted content is allowed to trigger the event.
 
 window.addEventListener("load", function(e) { playlist.onLoad(e); }, false);
 window.addEventListener("focus", function(e) { playlist.onFocus(e); }, false);

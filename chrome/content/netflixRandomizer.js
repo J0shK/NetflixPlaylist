@@ -1,3 +1,6 @@
+Components.utils.import("resource://gre/modules/FileUtils.jsm");
+Components.utils.import("resource://gre/modules/NetUtil.jsm");
+
 var randomIsOn;
 var scanBobCount = 0;
 
@@ -24,9 +27,6 @@ if (!style) {
 		elm = vIDs[i2];
 		if (elm.getAttribute("data-episodeid")) {
 			var img = document.createElement("input");
-			var test = document.cr
-			//img.type = "checkbox";
-			//img.name = "videos";
 			img.setAttribute("type","checkbox");
 			img.setAttribute("name","videos");
 			img.setAttribute("class","addVid");
@@ -214,6 +214,99 @@ var netflixRandomizer = function () {
 				//alert("Found " + foundLinks + " links with a target attribute");
 			}
 		},
+
+		insertCSS : function () {
+			var head = content.document.getElementsByTagName("head")[0];
+			var style = content.document.getElementById("netflix-randomizer-style");
+			if (!style) {
+				style = content.document.createElement("link");
+				style.id = "netflix-randomizer-style";
+				style.type = "text/css";
+				style.rel = "stylesheet";
+				style.href = "chrome://netflixrandomizer/skin/skin.css";
+				head.appendChild(style);
+			}
+		},
+
+		insertGlobalElements : function () {
+
+			var existingMenuItem = content.document.getElementById("showPlaylist");
+
+			if (!existingMenuItem) {
+				var mainMenu = content.document.getElementById("global-header");
+
+				var playlistMenuItem = content.document.createElement("li");
+				playlistMenuItem.setAttribute("class", "nav-playlist nav-item dropdown-trigger");
+				playlistMenuItem.setAttribute("id", "nav-playlist");
+				
+				var innerSpan = content.document.createElement("span");
+				innerSpan.setAttribute("class", "i-b content");
+				
+				var innerLink = content.document.createElement("a");
+				innerLink.setAttribute("id","showPlaylist");
+				innerLink.setAttribute("href","javascript:void(0)");
+				innerLink.innerHTML = "Playlist";
+
+				innerSpan.appendChild(innerLink);
+				playlistMenuItem.appendChild(innerSpan);
+				mainMenu.appendChild(playlistMenuItem);
+			}
+
+		},
+
+		insertHomeElements : function () {
+
+		},
+
+		insertPageElements : function () {
+			var episodeList = content.document.getElementById("episodeColumn").getElementsByClassName("episodeList")[0].getElementsByTagName("li");
+			
+			for (var i = episodeList.length - 1; i >= 0; i--) {
+
+				if (episodeList[i].getElementsByClassName("addBtn").length < 1) {
+					// var playButton = episodeList[i].getElementsByClassName("playBtn")[0];
+					var titleElement = episodeList[i].getElementsByClassName("episodeTitle")[0];
+
+					var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+					var mDBConn = Services.storage.openDatabase(file);
+
+					var element = content.document.createElement("span");
+					element.setAttribute("class", "addBtn");
+					element.setAttribute("vid", episodeList[i].getAttribute("data-episodeid"));
+					element.setAttribute("data-episodeid", episodeList[i].getAttribute("data-episodeid"));
+					element.setAttribute("seqNum", episodeList[i].getElementsByClassName("seqNum")[0].innerHTML);
+					element.setAttribute("episodeTitle", episodeList[i].getElementsByClassName("episodeTitle")[0].innerHTML);
+					element.setAttribute("episodeLink", episodeList[i].getElementsByClassName("playBtn")[0].getElementsByTagName("a")[0].getAttribute("href"));
+					// element.innerHTML = "+";
+					episodeList[i].insertBefore(element, titleElement);
+
+					//Remove all event listeners
+					var el = episodeList[i],
+					    elClone = el.cloneNode(true);
+
+					el.parentNode.replaceChild(elClone, el);
+					}
+					// episodeList[i].addEventListener('click', function() { var addToPlaylistEvent = new Event('AddToPlaylistEvent'); this.dispatchEvent(addToPlaylistEvent); alert("Done!");}, false);
+			};
+		},
+
+		showPlaylist : function () {
+			// var file = new FileUtils.File("/playlist.html");
+			// // Content type hint is useful on mobile platforms where the filesystem
+			// // would otherwise try to determine the content type.
+			// var channel = NetUtil.newChannel(file);
+			// channel.contentType = "text/html";
+
+			// NetUtil.asyncFetch(channel, function(inputStream, status) {
+			//   content.document.getElementsByTagName('body')[0].innerHTML = inputStream.contentCharset;
+			// });
+
+			toggleSidebar('viewNRSidebar',true);
+
+			var mainContentContainer = content.document.getElementById("displaypage-body");
+			var headerContainer = mainContentContainer[0];
+			var contentContainer = mainContentContainer[1];
+		},
 		
 		getCats : function () {
 			dump("getting categories dump\n");
@@ -307,12 +400,12 @@ var netflixRandomizer = function () {
 				
 			var boxes = content.document.getElementsByClassName("boxShot");
 			
-				for (var i=0;i<boxes.length;i++){
-					var titleElement = boxes[i].getElementsByTagName("img")[0];
-					var urlElement = boxes[i].getElementsByTagName("a")[0];
-						var title = titleElement.getAttribute("alt");
-						var url = urlElement.getAttribute("href");
-						var vid = gup("movieid",url);
+			for (var i=0;i<boxes.length;i++){
+				var titleElement = boxes[i].getElementsByTagName("img")[0];
+				var urlElement = boxes[i].getElementsByTagName("a")[0];
+				var title = titleElement.getAttribute("alt");
+				var url = urlElement.getAttribute("href");
+				var vid = gup("movieid",url);
 						//dump("title: "+title+" url: "+url+"\n");
 				
 				
@@ -321,66 +414,66 @@ var netflixRandomizer = function () {
 				var id = 0;
 				//dump("checking sql \n");
 				try{
-				while(check.executeStep()){
-					id = check.getString(0);
-					//dump(id+"\n");
-				}
+					while(check.executeStep()){
+						id = check.getString(0);
+						//dump(id+"\n");
+					}
 				}finally{
-				check.reset();
+					check.reset();
 				}
 				var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + vid);
 				//dump("sql2 done \n");
 				var id2 = 0;
 				//dump("checking sql2 \n");
 				try{
-				while(check2.executeStep()){
-					id2 = check2.getString(0);
-					//dump(id+"\n");
-				}
+					while(check2.executeStep()){
+						id2 = check2.getString(0);
+						//dump(id+"\n");
+					}
 				}finally{
-				check.reset();
+					check.reset();
 				}
 				//dump("done checking sql "+id+"\n");
 				if (id == 0 && id2 == 0) {
 				  var statement;
-				  try{
-					  //dump("index of" + movieTitle.indexOf("\"")+"\n");
-					  //doesnt work. for switching between strings with ' and "
-					  if (title.indexOf("\"") == -1){
-					  	 statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',:vID,:movieTitle,0,0,:movieTitle,:actualLink)');
-					  }else{
-						 statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + ",:vID,:movieTitle,0,0,:movieTitle,:actualLink)"); 
-					  }
-					  statement.params.vID = vid;
-					  statement.params.movieTitle = title;
-					  statement.params.actualLink = url;
-					  statement.execute();
-					  statement.reset();
-				  }catch(err){
+				  	try{
+						//dump("index of" + movieTitle.indexOf("\"")+"\n");
+						//doesnt work. for switching between strings with ' and "
+						if (title.indexOf("\"") == -1){
+						  statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',:vID,:movieTitle,0,0,:movieTitle,:actualLink)');
+						}else{
+							statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + ",:vID,:movieTitle,0,0,:movieTitle,:actualLink)"); 
+						}
+					  	statement.params.vID = vid;
+					  	statement.params.movieTitle = title;
+					  	statement.params.actualLink = url;
+					  	statement.execute();
+					  	statement.reset();
+			  		}catch(err){
 					  dump("SQL error "+err+"\n");
 					  dump(vid+"\n");
 					  dump(title+"\n");
 					  dump(url+"\n");
-				  }
+			  		}
 				}
 					  //dump("SQL dump \n");
 					  //dump(vid+"\n");
 					  //dump(title+"\n");
 					  //dump(url+"\n");
 			//dump("about to close sql \n");
-		}
+			}
   
-	  try{
-		  mDBConn.asyncClose();
-	  }catch(err){
-		  dump("SQL close error "+err+"\n");
-	  }
+			try{
+				mDBConn.asyncClose();
+			}catch(err){
+				dump("SQL close error "+err+"\n");
+			}
 		
-		dump("done scanning home page!");
+			dump("done scanning home page!");
 		},
 		
 		scanPage : function () {
-			//dump("running \n");
+			
 			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
 			var mDBConn = Services.storage.openDatabase(file);
 			
@@ -395,7 +488,7 @@ var netflixRandomizer = function () {
 				episodeNum = new Array();
 			
 			for (var i=0, il=episodes.length; i<il; i++) {
-				elm = episodes[i];
+				var elm = episodes[i];
 				if (elm.getAttribute("data-vid") == "") {
 					//dump(elm.getAttribute("href") + "\n");
 					episodeLinks.push(elm.getAttribute("href"));
@@ -422,9 +515,16 @@ var netflixRandomizer = function () {
 					episodeNames.push(epTitle);
 				}
 			}
-			var title = content.document.getElementsByClassName("title")[0].innerHTML;
+			var titles = content.document.getElementsByClassName("title");
+			var title;
+			for (var i = 0; i < titles.length; i++) {
+				if (titles[i].tagName == "H1" && titles[i].innerHTML.length > 0)
+				{
+					title = titles[i].innerHTML;
+				}
+			}
 			var season = content.document.getElementsByClassName("selectorTxt")[0].innerHTML;
-			
+
 			//var lastId = mDBConn.createStatement("SELECT pid FROM playlist ORDER BY pid DESC LIMIT 1");
 			//dump(lastId.getString(0) + "\n");
 			//dump("starting sql length  = "+episodeIDs.length+" \n");
@@ -604,33 +704,44 @@ var netflixRandomizer = function () {
 			//alert("Done scanning page!");
 		},
 		
-		addToPlaylist : function (vid) {
+		addToPlaylist : function (elm) {
 			//dump("adding to playlist \n");
-				
-			var episodes = content.document.getElementsByTagName("li"),
-				episodeLink, episodeID, episodeName, episodeNum;
 
-			
-			for (var i=0, il=episodes.length; i<il; i++) {
-				elm = episodes[i];
-				if (elm.getAttribute("data-episodeid") == vid) {
-					//dump(elm.getAttribute("href") + "\n");
-					episodeID = elm.getAttribute("data-episodeid");
-					episodeNum = elm.getElementsByClassName("seqNum")[0];
-					episodeName = elm.getElementsByClassName("episodeTitle")[0];
-					episodeLink = elm.getElementsByClassName("playBtn")[0].getElementByTagName("a").getAttribute("href");
-				}
-			}
+			var episodeLink, episodeID, episodeName, episodeNum;
+
+			episodeID = elm.getAttribute("data-episodeid");
+			episodeNum = elm.getAttribute("seqNum");
+			episodeName = elm.getAttribute("episodeTitle");
+			episodeLink = elm.getAttribute("episodeLink");
+
 			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
 			var mDBConn = Services.storage.openDatabase(file);
-			var title = content.document.getElementsByClassName("title")[0].innerHTML;
+
+			var titles = content.document.getElementsByClassName("title");
+			var title;
+			for (var i = 0; i < titles.length; i++) {
+				if (titles[i].tagName == "H1" && titles[i].innerHTML.length > 0)
+				{
+					title = titles[i].innerHTML;
+				}
+			}
 			var season = content.document.getElementsByClassName("selectorTxt")[0].innerHTML;
 			
-			mDBConn.executeSimpleSQL('INSERT INTO playlist(pid,vid,title,season,ep,name,url,watched) VALUES(' + null + ',' + episodeID + ',"' + title + '",' + season + ',' + episodeNum + ',"' + episodeName + '","' + episodeLink + '",0)');
 			
+			try{
+				mDBConn.executeSimpleSQL('INSERT INTO playlist(pid,vid,title,season,ep,name,url,watched) VALUES(' + null + ',' + episodeID + ',"' + title + '",' + season + ',' + episodeNum + ',"' + episodeName + '","' + episodeLink + '",0)');
+			}catch(err){
+				dump("add to playlist error: "+err+"\n");	
+			}
+
 			mDBConn.close();
 			
-			alert("Added " + episodeName + " to playlist!");
+			// alert("Added " + title + " " + episodeName + " to playlist!");
+
+			var evt = document.createEvent("Events");
+			evt.initEvent("UpdateSidebar", true, false);
+			elm.dispatchEvent(evt);
+
 		},
 		
 		playPlaylist : function (vid) {
@@ -680,12 +791,21 @@ var netflixRandomizer = function () {
 		},
 				
 		onPageLoad: function(aEvent) {
-		  		var doc = aEvent.originalTarget; // doc is document that triggered the event
-				var win = doc.defaultView; // win is the window for the doc
-				// test desired conditions and do something
-				// if (doc.nodeName == "#document") return; // only documents
-				// if (win != win.top) return; //only top window.
-				// if (win.frameElement) return; // skip iframes/frames
+	  		var doc = aEvent.originalTarget; // doc is document that triggered the event
+			var win = doc.defaultView; // win is the window for the doc
+			// test desired conditions and do something
+			// if (doc.nodeName == "#document") return; // only documents
+			// if (win != win.top) return; //only top window.
+			// if (win.frameElement) return; // skip iframes/frames
+			pathArray = win.location.href.split( '/' );
+			protocol = pathArray[0];
+			host = pathArray[2];
+
+			if (host != "www.netflix.com") return;
+
+			netflixRandomizer.insertCSS();
+			netflixRandomizer.insertGlobalElements();
+
 			if (!win.frameElement)  {
 				var autoRun = prefManager.getBoolPref("extensions.netflixrandomizer.autorun");
 					if (autoRun) {
@@ -695,44 +815,36 @@ var netflixRandomizer = function () {
 				var eid = checkElement.getAttribute("id");
 				
 				if (eid == "page-WiMovie"){
-					
+					dump("Is WiMovie");
+					netflixRandomizer.insertPageElements();
 					netflixRandomizer.scanPage();
 					
-				aEvent.originalTarget.defaultView.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
+					win.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
 					  // select the target node
-					  var target = doc.querySelector('.ajaxLoading');
-					   
+					var target = doc.querySelector('.ajaxLoading');
+					dump("Creating observer");
 					  // create an observer instance
-					  var observer = new MutationObserver(function(mutations) {
-						  mutations.forEach(function(mutation) {
-							  dump("mutation "+mutation.type+" "+scanBobCount+"\n");
-							  
-						  });
-							//setTimeout(function() {
-							if (scanBobCount >= 1){
-								toggleSidebar();
-								netflixRandomizer.scanPage();
-								toggleSidebar('viewNRSidebar',true);
-								scanBobCount = 0;
-							}else{
-								scanBobCount++;
-							}
-							//}, 100);
-					  });
+					var observer = new MutationObserver(function(mutations) {
+						mutations.forEach(function(mutation) {
+							dump("mutation "+mutation.type+" "+scanBobCount+"\n");	  
+						});
+						//setTimeout(function() {
+						if (scanBobCount >= 1){
+							toggleSidebar();
+							netflixRandomizer.scanPage();
+							toggleSidebar('viewNRSidebar',true);
+							scanBobCount = 0;
+						}else{
+							scanBobCount++;
+						}
+								//}, 100);
+					});
 					   
 					  // configuration of the observer:
-					  var config = { attributes: true, childList: true, characterData: true }
+					var config = { attributes: true, childList: true, characterData: true }
 					   
 					  // pass in the target node, as well as the observer options
-					  observer.observe(target, config);
-					  
-					  
-				//toggle only if on netflix.com
-				toggleSidebar();
-				dump("closed sidebar\n");
-				toggleSidebar('viewNRSidebar',true);
-				dump("opened sidebar\n");
-				
+					observer.observe(target, config);
 				  
 				}else if (eid == "page-WiPlayer"){
 					//dump(gup('movieid',doc.location.href)+"\n");
@@ -743,47 +855,36 @@ var netflixRandomizer = function () {
 					dump("opened sidebar\n");
 					netflixRandomizer.playPlaylist(gup('movieid',doc.location.href));
 				}else if(eid == "page-WiHome"){
-				//netflixRandomizer.scanHome();
-				netflixRandomizer.getCats();
-				var allowHomeScan = prefManager.getBoolPref("extensions.netflixrandomizer.homescan");
-				if (allowHomeScan){
-				//
-				// SCAN HOME PAGE
-				//
-				//toggle only if on netflix.com
-				dump("on home page \n");
-				//netflixRandomizer.scanBob();
-				toggleSidebar();
-				dump("closed sidebar\n");
-				toggleSidebar('viewNRSidebar',true);
-				dump("opened sidebar\n");
-				aEvent.originalTarget.defaultView.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
-					  // select the target node
-					  var target = doc.querySelector('#BobMovie');
-					  dump("got target "+target+"\n");
-					   
-					  // create an observer instance
-					  var observer = new MutationObserver(function(mutations) {
+					netflixRandomizer.insertHomeElements();
+
+					//netflixRandomizer.scanHome();
+					netflixRandomizer.getCats();
+					var allowHomeScan = prefManager.getBoolPref("extensions.netflixrandomizer.homescan");
+					if (allowHomeScan){
+						//
+						// SCAN HOME PAGE
+						//
+						aEvent.originalTarget.defaultView.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
+						// select the target node
+						var target = doc.querySelector('#BobMovie');
+						dump("got target "+target+"\n");
+
+						// create an observer instance
+						var observer = new MutationObserver(function(mutations) {
 						  mutations.forEach(function(mutation) {
 							  dump("mutation "+mutation.type+"\n");
 							  
 						  });
-							//setTimeout(function() {
-								toggleSidebar();
-								dump("closed sidebar\n");
-								netflixRandomizer.scanBob();
-								toggleSidebar('viewNRSidebar',true);
-								dump("opened sidebar\n");
-							//}, 100);
-					  });
-					   
-					  // configuration of the observer:
-					  var config = { attributes: true, childList: true, characterData: true }
-					   
-					  // pass in the target node, as well as the observer options
-					  observer.observe(target, config);					
-					
-				}
+
+						netflixRandomizer.scanBob();
+						});
+
+						// configuration of the observer:
+						var config = { attributes: true, childList: true, characterData: true }
+
+						// pass in the target node, as well as the observer options
+						observer.observe(target, config);					
+					}
 				}//end if allow home scan
 				//updatePage();
 				//alert("page is loaded : " +doc.location.href + "\n");
@@ -863,40 +964,7 @@ var myListener = {
     },
  
     onLocationChange: function(aProgress, aRequest, aURI) {
-        // This fires when the location bar changes; that is load event is confirmed
-        // or when the user switches tabs. If you use myListener for more than one tab/window,
-        // use aProgress.DOMWindow to obtain the tab/window which triggered the change.
-				var checkElement = content.document.getElementsByTagName("body")[0];
-				var eid = checkElement.getAttribute("id");
-				dump("on location "+aURI.spec.toString(0)+"\n");
-				if (eid == "page-WiMovie"){
-					
-					netflixRandomizer.scanPage();
-				}else if (eid == "page-WiPlayer"){
-					//dump(gup('movieid',doc.location.href)+"\n");
-					//dump("on player page DO SOMETHING:\n")
-					if (aURI.spec.indexOf("#") != -1){
-						dump("there is a #\n");
-						if (getQueryVariable('EpisodeMovieId',aURI.spec) != -1){
-							dump("query variable "+getQueryVariable('EpisodeMovieId',aURI.spec)+"\n");
-							toggleSidebar();
-							dump("closed sidebar\n");
-							toggleSidebar('viewNRSidebar',true);
-							dump("opened sidebar\n");
-							netflixRandomizer.playPlaylist(getQueryVariable('EpisodeMovieId',aURI.spec));
-						}else{
-							//dump("query variable "+getQueryVariable('MovieId',aURI.spec)+"\n");
-							//netflixRandomizer.playPlaylist(getQueryVariable('MovieId',aURI.spec));
-						}
-					}else{
-						dump("there isnt a #\n");
-						toggleSidebar();
-						dump("closed sidebar\n");
-						toggleSidebar('viewNRSidebar',true);
-						dump("opened sidebar\n");
-					 	netflixRandomizer.playPlaylist(gup('movieid',aURI.spec));
-					}
-				}
+
     },
  
     // For definitions of the remaining functions see related documentation
@@ -904,5 +972,23 @@ var myListener = {
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
     onSecurityChange: function(aWebProgress, aRequest, aState) {},
 }
+
+function handleClickEvent(e) {
+	var target = e.target;
+
+	// alert(target.className);
+
+	if (target.className == "addBtn") {
+		netflixRandomizer.addToPlaylist(target);
+		// alert("Added");
+	}
+
+	if (target.getAttribute("id") == "showPlaylist") {
+		netflixRandomizer.showPlaylist();
+	}
+}
+
+document.addEventListener("click", function(e) { handleClickEvent(e); }, false, true);
+
 window.addEventListener("load", netflixRandomizer.init, false);
 window.addEventListener("unload", netflixRandomizer.uninit, false);
