@@ -97,9 +97,27 @@
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 1px rgba(1, 1, 1, 0.3);
 }
 
+.netflix-randomizer-page-button {
+    background-color: #e7e7e7;
+    background-image: -moz-linear-gradient(center bottom , #e7e7e7, #ffffff);
+    border: 1px solid #959595;
+    border-radius: 3px;
+    box-shadow: 0 0 8px 0 #ccc;
+    color: #505050 !important;
+    font-size: 13px;
+    font-weight: bold;
+    margin-left: 12px;
+    padding: 5px;
+    text-align: center;
+    width: auto;
+}
+
+.netflix-randomizer-page-button:hover {
+    box-shadow: none;
+}
+
 #displaypage-content {
     margin: 0 auto;
-    min-height: 200px;
     width: 1000px;
 }
 
