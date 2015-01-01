@@ -46,6 +46,7 @@
     color: white;
     text-align: center;
 }
+
 .episodeList {
     float: left;
     width: 573px;
@@ -70,9 +71,55 @@
     text-align: center;
     width: 18px;
 
-    background: url("chrome://netflixrandomizer/skin/addButton.jpg") no-repeat scroll -2px 0px rgba(0, 0, 0, 0);
+    background: url("chrome://netflixrandomizer/skin/addButton.png") no-repeat scroll -2px 0px rgba(0, 0, 0, 0);
 }
 
 .addBtn:hover {
     background-position: -26px 0px;
+}
+
+
+.cta-button {
+    background: url("http://cdn-0.nflximg.com/en_us/facebook/social_mountain_sprite.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    border: 1px solid #b3b3b3;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    clear: left;
+    color: #191919;
+    cursor: pointer;
+    font-size: 116%;
+    font-weight: bold;
+    padding: 6px 15px 6px 33px;
+}
+
+.cta-button:hover {
+    background: url("http://cdn-0.nflximg.com/en_us/facebook/social_mountain_sprite.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 1px rgba(1, 1, 1, 0.3);
+}
+
+#displaypage-content {
+    margin: 0 auto;
+    min-height: 200px;
+    width: 1000px;
+}
+
+#playlistList li span {
+    float: left;
+    display: block;
+    text-align: left;
+}
+#playlistList, #playlistList li {
+    width: 77%;
+}
+#playlistList .episode-name {
+    width: 45%;
+}
+#playlistList .episode {
+    width: 5%;
+}
+#playlistList .title {
+    width: 45%;
+}
+#playlistList .season {
+    width: 5%;
 }

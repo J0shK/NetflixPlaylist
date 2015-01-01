@@ -115,7 +115,7 @@ function updatePlaylist() {
 				li.setAttribute("id",statement2.getString(0));
 				li.setAttribute("vid",statement2.getString(1));
 				//for styling
-					if (statement2.getString(1) == cvid){
+					if (statement2.getString(0) == cvid){
 						li.setAttribute("class","currently-playing");
 					}
 				li.setAttribute("url",statement2.getString(6));
@@ -198,7 +198,7 @@ function playVid() {
 	var counter = 0;
 	for (var i = 0; i < selectedVids.length; i++){
 		if (selectedVids[i].getAttribute('selected')){
-			mDBConn.executeSimpleSQL("UPDATE status SET playing=1, cvid="+ selectedVids[i].getAttribute('vid') +" WHERE id=1");
+			mDBConn.executeSimpleSQL("UPDATE status SET playing=1, cvid="+ selectedVids[i].getAttribute('id') +" WHERE id=1");
 			mDBConn.close();
 			counter++;
 			mainWindow.openUILinkIn(selectedVids[i].getAttribute('url'), "current", false);

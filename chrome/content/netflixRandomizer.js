@@ -1,44 +1,9 @@
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource://gre/modules/NetUtil.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
 var randomIsOn;
 var scanBobCount = 0;
-
-function updatePage() {
-var head = content.document.getElementsByTagName("head")[0];
-var style = content.document.getElementById("netflix-randomizer-style");
-if (!style) {
-		style = content.document.createElement("link");
-		style.id = "netflix-randomizer-style";
-		style.type = "text/css";
-		style.rel = "stylesheet";
-		style.href = "chrome://netflixrandomizer/skin/skin.css";
-		head.appendChild(style);
-}
-  var cBody = content.document.getElementsByTagName("body")[0];
-  if (cBody.getAttribute("id") == "page-WiMovie"){
-	var epCol = content.document.getElementsByClassName("episodeList")[0];
-	var addForm = document.createElement("form");
-	addForm.setAttribute("action","")
-	addForm.setAttribute("class","addList")
-	  
-	var vIDs = content.document.getElementsByTagName("li");
-	for (var i2=0, il2=vIDs.length; i2<il2; i2++) {
-		elm = vIDs[i2];
-		if (elm.getAttribute("data-episodeid")) {
-			var img = document.createElement("input");
-			img.setAttribute("type","checkbox");
-			img.setAttribute("name","videos");
-			img.setAttribute("class","addVid");
-			img.setAttribute("value",elm.getAttribute("data-episodeid"));
-			//img.value = elm.getAttribute("data-episodeid");
-			//img.innerHTML = "add this episode";
-			addForm.appendChild(img);
-		}
-	}
-	epCol.parentNode.appendChild(addForm);
-  }
-}
 
 function installButton(toolbarId, id, afterId) {
     if (!document.getElementById(id)) {
@@ -61,11 +26,26 @@ function installButton(toolbarId, id, afterId) {
     }
 }
 
+//+ Jonas Raoni Soares Silva
+//@ http://jsfromhell.com/array/shuffle [v1.0]
+function shuffleArray(o){ //v1.0
+    for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
+
 var netflixRandomizer = function () {
 	dump("initial init \n");
+	var playlistEnum = {
+		DEFAULT : 0,
+		SHUFFLE : 1,
+		QUICK : 2
+	}
 	var prefManager = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
 	return {
 		init : function () {
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+
 			var firstRun = prefManager.getBoolPref("extensions.netflixrandomizer.firstrun");
 			if (!firstRun) {
 				installButton("nav-bar", "netflix-randomizer-toolbar-button");
@@ -73,36 +53,45 @@ var netflixRandomizer = function () {
 				//installButton("addon-bar", "my-extension-addon-bar-button");
 				prefManager.setBoolPref("extensions.netflixrandomizer.firstrun",true);
 			}
+
+			var version;
+			if (prefManager.getPrefType("extensions.netflixrandomizer.version")) {
+				version = prefManager.getIntPref("extensions.netflixrandomizer.version");
+			}
+
+			if (!version)
+			{
+				prefManager.setIntPref("extensions.netflixrandomizer.version",1);
+			}
+
+			//Migrate to version 1
+			if (true)
+			{
+				mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS onpage");
+				mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS current_playlist");
+
+				//Actually needs migration methods
+				// mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS status");
+				// mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS playlist");
+				//Doesnt need anything - New table since v1
+				// mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS quick_playlist");
+			}
 			
-			Components.utils.import("resource://gre/modules/Services.jsm");
-			Components.utils.import("resource://gre/modules/FileUtils.jsm");
-			 
-			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
-			var mDBConn = Services.storage.openDatabase(file);
-			
-			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS onpage (pid INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, title TEXT, season INTEGER, ep INTEGER, name TEXT, url TEXT)");
-			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS status (id INTEGER PRIMARY KEY AUTOINCREMENT, playing INTEGER, random INTEGER, cvid INTEGER)");
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS status (id INTEGER PRIMARY KEY AUTOINCREMENT, current_playlist INTEGER)");
 			//check if table is empty
-				var statement = mDBConn.createStatement("SELECT COUNT(*) FROM status");
-				statement.executeAsync({
-				  handleResult: function(resultSet)
-				  {
-					var row = resultSet.getNextRow();
-					var count = row.getResultByIndex(0);
-					//dump("count = "+count+"\n");
-					  if (count == 0){
-						  mDBConn.executeSimpleSQL("INSERT INTO status(id,playing,random,cvid) VALUES(" + null + ",0,0,0)");
-					  }
-				  },
-				  handleError: function(error) {},
-				  handleCompletion: function(reason) {}
-				});
-				
-				// Close connection once the pending operations are completed
-				
-			//mDBConn = Services.storage.openDatabase(file);
-			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS playlist (pid INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, title TEXT, season INTEGER, ep INTEGER, name TEXT, url TEXT, watched INTEGER)");
-			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS current_playlist (cpid INTEGER PRIMARY KEY AUTOINCREMENT, pid INTEGER)");
+			var statement = mDBConn.createStatement("SELECT COUNT(*) FROM status");
+			statement.executeStep();
+			var count = statement.getString(0);
+				//dump("count = "+count+"\n");
+			if (count == 0){
+				mDBConn.executeSimpleSQL("INSERT INTO status(id,current_playlist) VALUES(" + null + ",0)");
+			}
+
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS video (id INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, title TEXT, season INTEGER, ep INTEGER, name TEXT, url TEXT, watch_count INTEGER)");
+			
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, playing INTEGER)");
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS quick_playlist (id INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, playing INTEGER)");
+
 			mDBConn.asyncClose();
 			//updatePage();
 			gBrowser.addEventListener("load", netflixRandomizer.onPageLoad, true);
@@ -114,106 +103,19 @@ var netflixRandomizer = function () {
 		},
 		
 		uninit : function () {
-			toggleSidebar();
-			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
-			var mDBConn = Services.storage.openDatabase(file);
-			
-			mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS onpage");
-			mDBConn.close();
+			// var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			// var mDBConn = Services.storage.openDatabase(file);
+			// mDBConn.close();
 			gBrowser.removeEventListener("load", netflixRandomizer.onPageLoad, false);
 			gBrowser.removeProgressListener(myListener);
 			dump("done uninit \n");
 		},
 
 		run : function () {
-			dump("running \n");
-			var head = content.document.getElementsByTagName("head")[0],
-				style = content.document.getElementById("netflix-randomizer-style"),
-				allLinks = content.document.getElementsByTagName("a"),
-				foundLinks = 0;
-				
-			var episodes = content.document.getElementsByClassName("btn-play"),
-				vIDs = content.document.getElementsByTagName("li"),
-				episodeLinks = new Array(),
-				episodeIDs = new Array(),
-				episodeNames = new Array(),
-				episodeNum = new Array();
 
-			if (!style) {
-				style = content.document.createElement("link");
-				style.id = "netflix-randomizer-style";
-				style.type = "text/css";
-				style.rel = "stylesheet";
-				style.href = "chrome://netflixrandomizer/skin/skin.css";
-				head.appendChild(style);
-			}
-			
-			for (var i=0, il=episodes.length; i<il; i++) {
-				elm = episodes[i];
-				if (elm.getAttribute("data-vid") == "") {
-					dump(elm.getAttribute("href") + "\n");
-					episodeLinks.push(elm.getAttribute("href"));
-					//window.location(elm.getAttribute("href"));
-					var paramhref = elm.getAttribute("href");
-					//mDBConn.executeSimpleSQL("INSERT INTO playlist(url) VALUES('" + param + "')");
-				}
-			}
-			for (var i2=0, il2=vIDs.length; i2<il2; i2++) {
-				elm = vIDs[i2];
-				if (elm.getAttribute("data-episodeid")) {
-					dump(elm.getAttribute("data-episodeid") + "\n");
-					episodeIDs.push(elm.getAttribute("data-episodeid"));
-					//var parameid = elm.getAttribute("data-episodeid");
-					//mDBConn.executeSimpleSQL("INSERT INTO playlist(vid) VALUES('" + param + "')");
-					
-					episodeNum.push(elm.getElementsByClassName("seqNum")[0].innerHTML); //seqNum
-					//dump(elm.getElementsByClassName("seqNum")[0].innerHTML + "\n");
-					var epTitle = elm.getElementsByClassName("episodeTitle")[0].innerHTML;
-					epTitle = mysql_real_escape_string(epTitle);
-					episodeNames.push(epTitle);
-					dump(epTitle + "\n");
-				}
-			}
-			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
-			var mDBConn = Services.storage.openDatabase(file);
-			var title = content.document.getElementsByClassName("title")[0].innerHTML;
-			var season = content.document.getElementsByClassName("selectorTxt")[0].innerHTML;
-			
-			//var lastId = mDBConn.createStatement("SELECT pid FROM playlist ORDER BY pid DESC LIMIT 1");
-			//dump(lastId.getString(0) + "\n");
-			
-			for (var i3=0, il3=episodeIDs.length; i3<il3; i3++) {
-				mDBConn.executeSimpleSQL('INSERT INTO playlist(pid,vid,title,season,ep,name,url,watched) VALUES(' + null + ',' + episodeIDs[i3] + ',"' + title + '",' + season + ',' + episodeNum[i3] + ',"' + episodeNames[i3] + '","' + episodeLinks[i3] + '",0)');
-			}
-			mDBConn.close();
-			
-			alert("Added videos to playlist!");
-			
-			var maxEps = episodes.length;
-			if (maxEps > 0){
-			  var randomEP = Math.floor(Math.random() * (maxEps - 0 + 1)) + 0;
-			  dump(episodeLinks[randomEP] + "\n");
-			  //REDIRECT
-			  //openUILinkIn(episodeLinks[randomEP], "current", false);
-			}else{
-				alert("Cannot find any movies");
-			}
-
-			for (var i=0, il=allLinks.length; i<il; i++) {
-				elm = allLinks[i];
-				if (elm.getAttribute("title")) {
-					elm.className += ((elm.className.length > 0)? " " : "") + "netflix-randomizer-selected";
-					elm.
-					foundLinks++;
-				}
-			}
-			if (foundLinks === 0) {
-				//alert("No links found with a target attribute");
-			}
-			else {
-				//alert("Found " + foundLinks + " links with a target attribute");
-			}
 		},
+
+		// ---######--- HTML Injections ---######---
 
 		insertCSS : function () {
 			var head = content.document.getElementsByTagName("head")[0];
@@ -231,10 +133,9 @@ var netflixRandomizer = function () {
 		insertGlobalElements : function () {
 
 			var existingMenuItem = content.document.getElementById("showPlaylist");
+			var mainMenu = content.document.getElementById("global-header");
 
-			if (!existingMenuItem) {
-				var mainMenu = content.document.getElementById("global-header");
-
+			if (!existingMenuItem && mainMenu) {
 				var playlistMenuItem = content.document.createElement("li");
 				playlistMenuItem.setAttribute("class", "nav-playlist nav-item dropdown-trigger");
 				playlistMenuItem.setAttribute("id", "nav-playlist");
@@ -288,7 +189,23 @@ var netflixRandomizer = function () {
 					}
 					// episodeList[i].addEventListener('click', function() { var addToPlaylistEvent = new Event('AddToPlaylistEvent'); this.dispatchEvent(addToPlaylistEvent); alert("Done!");}, false);
 			};
+
+
+			var bodyContent = content.document.getElementById("displaypage-bodycontent");
+			var actualContent = bodyContent.children[0];
+			var seasonSelector = actualContent.children[0];
+			var pin = actualContent.children[1];
+
+			if (pin.getAttribute("id") != "shufflePlaylist") {
+				var button = content.document.createElement("button");
+				button.setAttribute("id", "shufflePlaylist");
+				button.innerHTML = "button";
+				actualContent.insertBefore(button, pin);
+			}
+
 		},
+
+		// --- ###### --- Playlist --- ###### ---
 
 		showPlaylist : function () {
 			// var file = new FileUtils.File("/playlist.html");
@@ -301,98 +218,339 @@ var netflixRandomizer = function () {
 			//   content.document.getElementsByTagName('body')[0].innerHTML = inputStream.contentCharset;
 			// });
 
-			toggleSidebar('viewNRSidebar',true);
+			// toggleSidebar('viewNRSidebar',true);
 
-			var mainContentContainer = content.document.getElementById("displaypage-body");
-			var headerContainer = mainContentContainer[0];
-			var contentContainer = mainContentContainer[1];
+			// var mainContentContainer = content.document.getElementById("displaypage-body");
+			// var headerContainer = mainContentContainer.childNodes[0];
+			// var contentContainer = mainContentContainer.childNodes[1];
+
+			// headerContainer.innerHTML = "";
+
+			// contentContainer.innerHTML = "";
+
+			content.document.location.href = "chrome://netflixrandomizer/content/playlist.html";
 		},
-		
-		getCats : function () {
-			dump("getting categories dump\n");
+
+		constructPlaylist : function () {
+			var playlistList = content.document.getElementById("playlistList");
+
 			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
 			var mDBConn = Services.storage.openDatabase(file);
-				
-			var catRows = content.document.getElementsByClassName("mrow");
 			
-				for (var i=0;i<catRows.length;i++){
-					var titleElement = catRows[i].getElementsByTagName("h3")[0];
-					//var urlElement = catRows[i].getElementsByTagName("a")[0];
-					var title = "Category";
-					if (titleElement.getElementsByTagName("a")[0]){
-						title = trimString(titleElement.getElementsByTagName("a")[0].innerHTML);
-					}else{
-						title = trimString(titleElement.innerHTML);
-					}
-						//var url = urlElement.getAttribute("href");
-						//var vid = gup("movieid",url);
-						var vid = i;
-						//dump("title: "+title+" url: "+url+"\n");
-				var check = mDBConn.createStatement("SELECT vid FROM playlist WHERE vid=" + vid);
-				//dump("sql done \n");
-				var id = 0;
-				//dump("checking sql \n");
-				try{
-				while(check.executeStep()){
-					id = check.getString(0);
-					//dump(id+"\n");
-				}
-				}finally{
-				check.reset();
-				}
-				var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + vid);
-				//dump("sql2 done \n");
-				var id2 = 0;
-				//dump("checking sql2 \n");
-				try{
-				while(check2.executeStep()){
-					id2 = check2.getString(0);
-					//dump(id+"\n");
-				}
-				}finally{
-				check.reset();
-				}
-				//dump("done checking sql "+id+"\n");
-				if (id == 0 && id2 == 0) {
-				  var statement;
-				  try{
-					  //dump("index of" + movieTitle.indexOf("\"")+"\n");
-					  //doesnt work. for switching between strings with ' and "
-					  if (title.indexOf("\"") == -1){
-					  	 statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(:null1,:vID,:movieTitle,0,0,:movieTitle,:vID)');
-					  }else{
-						 statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(:null1,:vID,:movieTitle,0,0,:movieTitle,:vID)"); 
-					  }
-					  statement.params.vID = vid;
-					  statement.params.movieTitle = title;
-					  //statement.params.actualLink = url;
-					  statement.params.null1 = null;
-					  statement.execute();
-					  statement.reset();
-				  }catch(err){
-					  dump("SQL error "+err+"\n");
-					  dump(vid+"\n");
-					  dump(title+"\n");
-					  //dump(url+"\n");
-				  }
-				}
-					  dump("Cat SQL dump \n");
-					  dump(vid+"\n");
-					  dump(title+"\n");
-					  //dump(url+"\n");
-			//dump("about to close sql \n");
-		}
-  
-	  try{
-		  mDBConn.asyncClose();
-	  }catch(err){
-		  dump("SQL close error "+err+"\n");
-	  }
+			var statement = mDBConn.createStatement("SELECT * FROM playlist");
+
 		
-		dump("done scanning categories!");
+			var i = 1;
+			try{
+				while(statement.executeStep()){
+					var vid = statement.getString(1)
+					var video = mDBConn.createStatement("SELECT * FROM video WHERE id="+vid);
+					video.executeStep();
+					var name = video.getString(5);
+					name = name.replace(/\\/g, "");
+
+
+					var li = content.document.createElement("li");
+
+					li.setAttribute("id",video.getString(0));
+					li.setAttribute("vid",video.getString(1));
+					//for styling
+						if (statement.getString(2) == 1){
+							li.setAttribute("class","currently-playing");
+						}
+					// li.setAttribute("url",statement2.getString(6));
+
+					var linkElement = content.document.createElement("a");
+					linkElement.setAttribute("href",video.getString(6)+"&playlist=1&pid=0&vid="+statement.getString(0));
+
+	        		var l1 = content.document.createElement("span");
+					l1.setAttribute("class","episode"); //episode #
+					l1.innerHTML = video.getString(4);
+	        		linkElement.appendChild(l1);
+
+	        		var l2 = content.document.createElement("span");
+					l2.setAttribute("class","episode-name"); // episode title
+					l2.innerHTML = name;
+	        		linkElement.appendChild(l2);
+
+	        		var l3 = content.document.createElement("span");
+					l3.setAttribute("class","title"); //series title
+					l3.innerHTML = video.getString(2);
+	        		linkElement.appendChild(l3);
+
+	        		var l4 = content.document.createElement("span");
+					l4.setAttribute("class", "season"); //season
+					l4.innerHTML = video.getString(3);
+	        		linkElement.appendChild(l4);
+
+	        		li.appendChild(linkElement);
+					playlistList.appendChild(li);
+					i++;
+					video.reset();
+				}
+			}catch(err){
+				dump("Construction error: "+err+" \n");
+			}finally{
+				statement.reset();
+			}
+			//dump("END playlist update \n");
+			mDBConn.close();
+		},
+
+		currentPlaylistId: function (conn) {
+			var mDBConn = conn;
+			if (!mDBConn) {
+				var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+				mDBConn = Services.storage.openDatabase(file);
+			}
 			
+			var check = mDBConn.createStatement("SELECT playlist FROM status WHERE id=1");
+			var pid = 0;
+			try{
+				check.executeStep();
+				pid = check.getString(0);
+			}finally{
+				check.reset();
+			}
+
+			if (!conn) {
+				mDBConn.close();
+			}
+			
+			return pid;
+		},
+
+		currentPlaylistName: function (conn) {
+			var mDBConn = conn;
+			if (!mDBConn) {
+				var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+				mDBConn = Services.storage.openDatabase(file);
+			}
+			var check = mDBConn.createStatement("SELECT playlist FROM status WHERE id=1");
+			var pid = 0;
+			try{
+				check.executeStep();
+				pid = check.getString(0);
+			}finally{
+				check.reset();
+			}
+
+			if (!conn) {
+				mDBConn.close();
+			}
+			var name = "";
+			switch(pid) {
+				case playlistEnum.DEFAULT:
+					name = "playlist";
+					break;
+				case playlistEnum.SHUFFLE:
+					name = "quick_playlist";
+					break;
+				case playlistEnum.QUICK:
+					name = "quick_playlist";
+					break;
+				default:
+					name = "playlist";
+					break;
+			}
+
+			return name;
+		},
+		currentPlaylistNameForID: function (pid) {
+			var name = "";
+			switch(parseInt(pid)) {
+				case playlistEnum.DEFAULT:
+					name = "playlist";
+					break;
+				case playlistEnum.SHUFFLE:
+					name = "quick_playlist";
+					break;
+				case playlistEnum.QUICK:
+					name = "quick_playlist";
+					break;
+				default:
+					name = "playlist";
+					break;
+			}
+
+			return name;
 		},
 		
+		addToPlaylist : function (elm) {
+			//dump("adding to playlist \n");
+
+			var episodeLink, episodeID, episodeName, episodeNum;
+
+			episodeID = elm.getAttribute("data-episodeid");
+			episodeNum = elm.getAttribute("seqNum");
+			episodeName = elm.getAttribute("episodeTitle");
+			episodeLink = elm.getAttribute("episodeLink");
+
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+
+			var titles = content.document.getElementsByClassName("title");
+			var title;
+			for (var i = 0; i < titles.length; i++) {
+				if (titles[i].tagName == "H1" && titles[i].innerHTML.length > 0)
+				{
+					title = titles[i].innerHTML;
+				}
+			}
+			var season = content.document.getElementsByClassName("selectorTxt")[0].innerHTML;
+			var existingID;
+			try{
+				var check = mDBConn.createStatement("SELECT id FROM video WHERE vid="+episodeID);
+				check.executeStep();
+				existingID = check.getString(0);
+				check.reset();
+			}catch(err){
+				dump("Video doesnt exist in db \n")
+				
+				mDBConn.executeSimpleSQL('INSERT INTO video(id,vid,title,season,ep,name,url,watch_count) VALUES(' + null + ',' + episodeID + ',"' + title + '",' + season + ',' + episodeNum + ',"' + episodeName + '","' + episodeLink + '",0)');
+				check = mDBConn.createStatement("SELECT id FROM video WHERE vid="+episodeID);
+				check.executeStep();
+				existingID = check.getString(0);
+				dump("added video and got id:"+existingID+"\n");
+			}finally{
+				mDBConn.executeSimpleSQL('INSERT INTO playlist(id,vid,playing) VALUES(' + null + ',' + existingID + ',0)');
+				dump("added video to playlist \n");
+			}
+
+			mDBConn.close();
+			
+			// alert("Added " + title + " " + episodeName + " to playlist!");
+			netflixRandomizer.updateSidebar(elm);
+		},
+
+		shufflePlaylist : function () {
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+			
+			var statement = mDBConn.createStatement("SELECT * FROM playlist");
+			//pid INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, title TEXT, season INTEGER, ep INTEGER, name TEXT, url TEXT, watched INTEGER
+			var playlist = new Array();
+			var i = 1;
+			try{
+				while(statement.executeStep()){
+					var video = new Array();
+					video["id"] = statement.getString(0);
+					video["vid"] = statement.getString(1);
+					video["playing"] = statement.getString(2);
+					playlist.push(video);
+					i++;
+				}
+			}finally{
+				statement.reset();
+			}
+
+			mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS quick_playlist");
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS quick_playlist (id INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, playing INTEGER)");
+
+			playlist = shuffleArray(playlist);
+
+			for (var i = 0; i < playlist.length; i++) {
+				try{
+					mDBConn.executeSimpleSQL('INSERT INTO quick_playlist(id,vid,playing) VALUES(' + null + ',' + playlist[i]["vid"] + ',"' + playlist[i]["playing"] + '")');
+				}catch(err){
+					dump("add to playlist error: "+err+"\n");	
+				}
+			}
+			//dump("END playlist update \n");
+			mDBConn.close();
+
+			netflixRandomizer.constructPlaylist();
+		},
+
+		setVideoIsPlaying : function (pid,pvid) {
+			dump("Starting to set as playing pid:"+pid+" pvid:"+pvid+"\n");
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+			var currentPlaylistName = netflixRandomizer.currentPlaylistNameForID(pid);
+			try{
+				mDBConn.executeSimpleSQL("UPDATE "+ currentPlaylistName +" SET playing=0 WHERE playing=1");
+				mDBConn.executeSimpleSQL("UPDATE "+ currentPlaylistName +" SET playing=1 WHERE id="+pvid);
+			}catch(error){
+				dump("SQL set playing error: "+error+"\n");
+			}
+
+			mDBConn.close();
+		},
+		
+		playPlaylist : function (pid) {
+			dump("starting playlist with pid:"+pid+"\n");
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+			var currentPlaylistName = netflixRandomizer.currentPlaylistNameForID(pid);
+
+			var purl;
+			var pvid = 0;
+			var newID;
+			var success = false;
+
+			try{
+				var check = mDBConn.createStatement("SELECT * FROM "+ currentPlaylistName +" WHERE playing=1");
+				var id = 0;
+				check.executeStep();
+				id = check.getString(0);
+				pvid = check.getString(1);
+				check.reset();
+				
+				var getNext = mDBConn.createStatement("SELECT id,vid FROM "+ currentPlaylistName);
+
+				while(getNext.executeStep()){
+					if (getNext.getString(0) == id){
+						break;
+					}
+				}
+				var errorGettingNext;
+				try{
+					getNext.executeStep();
+					newID = getNext.getString(0);
+					var newVid = getNext.getString(1);
+				}catch(err){
+					dump("error getting next video in playlist");
+					errorGettingNext = true;
+				}finally{
+					getNext.reset();
+				}
+
+
+				// mDBConn.executeSimpleSQL("UPDATE "+ currentPlaylistName +" SET playing=0 WHERE playing=1");
+				// mDBConn.executeSimpleSQL("UPDATE "+ currentPlaylistName +" SET playing=1 WHERE id="+newID);
+
+				var getURL = mDBConn.createStatement("SELECT url FROM video WHERE id="+ newVid);
+				getURL.executeStep();
+				purl = getURL.getString(0);
+
+				success = true;
+					
+			}catch(error){
+				dump("SQL playlist error: "+error+"\n");
+			}
+
+			mDBConn.asyncClose();
+
+			if (success && !errorGettingNext){
+				openUILinkIn(purl+"&playlist=1&pid="+pid+"&vid="+newID, "current", false);
+			}else{
+				openUILinkIn("chrome://netflixrandomizer/content/playlist.html", "current", false);
+			}
+		},
+
+		resetPlaylist : function() {
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+					
+			mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS playlist");
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS playlist (pid INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, title TEXT, season INTEGER, ep INTEGER, name TEXT, url TEXT, watched INTEGER)");
+			
+			mDBConn.close();
+			netflixRandomizer.updateSidebar();
+		},
+
+		// --- ###### --- Scanning --- ###### ---
+
 		scanHome : function () {
 			dump("home scan dump\n");
 			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
@@ -421,41 +579,41 @@ var netflixRandomizer = function () {
 				}finally{
 					check.reset();
 				}
-				var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + vid);
-				//dump("sql2 done \n");
-				var id2 = 0;
-				//dump("checking sql2 \n");
-				try{
-					while(check2.executeStep()){
-						id2 = check2.getString(0);
-						//dump(id+"\n");
-					}
-				}finally{
-					check.reset();
-				}
-				//dump("done checking sql "+id+"\n");
-				if (id == 0 && id2 == 0) {
-				  var statement;
-				  	try{
-						//dump("index of" + movieTitle.indexOf("\"")+"\n");
-						//doesnt work. for switching between strings with ' and "
-						if (title.indexOf("\"") == -1){
-						  statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',:vID,:movieTitle,0,0,:movieTitle,:actualLink)');
-						}else{
-							statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + ",:vID,:movieTitle,0,0,:movieTitle,:actualLink)"); 
-						}
-					  	statement.params.vID = vid;
-					  	statement.params.movieTitle = title;
-					  	statement.params.actualLink = url;
-					  	statement.execute();
-					  	statement.reset();
-			  		}catch(err){
-					  dump("SQL error "+err+"\n");
-					  dump(vid+"\n");
-					  dump(title+"\n");
-					  dump(url+"\n");
-			  		}
-				}
+				// var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + vid);
+				// //dump("sql2 done \n");
+				// var id2 = 0;
+				// //dump("checking sql2 \n");
+				// try{
+				// 	while(check2.executeStep()){
+				// 		id2 = check2.getString(0);
+				// 		//dump(id+"\n");
+				// 	}
+				// }finally{
+				// 	check.reset();
+				// }
+				// //dump("done checking sql "+id+"\n");
+				// if (id == 0 && id2 == 0) {
+				//   var statement;
+				//   	try{
+				// 		//dump("index of" + movieTitle.indexOf("\"")+"\n");
+				// 		//doesnt work. for switching between strings with ' and "
+				// 		if (title.indexOf("\"") == -1){
+				// 		  statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',:vID,:movieTitle,0,0,:movieTitle,:actualLink)');
+				// 		}else{
+				// 			statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + ",:vID,:movieTitle,0,0,:movieTitle,:actualLink)"); 
+				// 		}
+				// 	  	statement.params.vID = vid;
+				// 	  	statement.params.movieTitle = title;
+				// 	  	statement.params.actualLink = url;
+				// 	  	statement.execute();
+				// 	  	statement.reset();
+			 //  		}catch(err){
+				// 	  dump("SQL error "+err+"\n");
+				// 	  dump(vid+"\n");
+				// 	  dump(title+"\n");
+				// 	  dump(url+"\n");
+			 //  		}
+				// }
 					  //dump("SQL dump \n");
 					  //dump(vid+"\n");
 					  //dump(title+"\n");
@@ -542,42 +700,30 @@ var netflixRandomizer = function () {
 				check.reset();
 				}
 				
-				var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + episodeIDs[i3]);
-				//dump("sql done \n");
-				var id2 = 0;
-				//dump("checking sql \n");
-				try{
-				while(check2.executeStep()){
-					id2 = check2.getString(0);
-					//dump(id+"\n");
-				}
-				}finally{
-				check2.reset();
-				}
-				//dump("done checking sql "+ i3 +" \n");
-				if (id == 0 && id2 == 0) {
-				  var statement;
-				  try{
-					  //dump("index of" + title.indexOf("\"")+"\n");
-					  //doesnt work. for switching between strings with ' and "
-					  if (title.indexOf("\"") == -1){
-					  	statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',' + episodeIDs[i3] + ',:title,' + season + ',' + episodeNum[i3] + ',"' + episodeNames[i3] + '","' + episodeLinks[i3] + '")');
-					  }else{
-						 statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + "," + episodeIDs[i3] + ",:title," + season + "," + episodeNum[i3] + ",'" + episodeNames[i3] + "','" + episodeLinks[i3] + "')"); 
-					  }
-					  statement.params.title = title;
-					  statement.execute();
-					  statement.reset();
-				  }catch(err){
-					  dump("SQL error "+err+"\n");
-					  dump(episodeIDs[i3]+"\n");
-					  dump(statement.params.title+"\n");
-					  dump(season+"\n");
-					  dump(episodeNum[i3]+"\n");
-					  dump(episodeNames[i3]+"\n");
-					  dump(episodeLinks[i3]+"\n");
-				  }
-				}
+				// //dump("done checking sql "+ i3 +" \n");
+				// if (id == 0 && id2 == 0) {
+				//   var statement;
+				//   try{
+				// 	  //dump("index of" + title.indexOf("\"")+"\n");
+				// 	  //doesnt work. for switching between strings with ' and "
+				// 	  if (title.indexOf("\"") == -1){
+				// 	  	statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',' + episodeIDs[i3] + ',:title,' + season + ',' + episodeNum[i3] + ',"' + episodeNames[i3] + '","' + episodeLinks[i3] + '")');
+				// 	  }else{
+				// 		 statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + "," + episodeIDs[i3] + ",:title," + season + "," + episodeNum[i3] + ",'" + episodeNames[i3] + "','" + episodeLinks[i3] + "')"); 
+				// 	  }
+				// 	  statement.params.title = title;
+				// 	  statement.execute();
+				// 	  statement.reset();
+				//   }catch(err){
+				// 	  dump("SQL error "+err+"\n");
+				// 	  dump(episodeIDs[i3]+"\n");
+				// 	  dump(statement.params.title+"\n");
+				// 	  dump(season+"\n");
+				// 	  dump(episodeNum[i3]+"\n");
+				// 	  dump(episodeNames[i3]+"\n");
+				// 	  dump(episodeLinks[i3]+"\n");
+				//   }
+				// }
 			}
 			//dump("about to close sql \n");
 			try{
@@ -652,41 +798,41 @@ var netflixRandomizer = function () {
 				}finally{
 				check.reset();
 				}
-				var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + vID[5]);
-				dump("sql2 done \n");
-				var id2 = 0;
-				dump("checking sql2 \n");
-				try{
-				while(check2.executeStep()){
-					id2 = check2.getString(0);
-					//dump(id+"\n");
-				}
-				}finally{
-				check.reset();
-				}
-				dump("done checking sql "+id+"\n");
-				if (id == 0 && id2 == 0) {
-				  var statement;
-				  try{
-					  //dump("index of" + movieTitle.indexOf("\"")+"\n");
-					  //doesnt work. for switching between strings with ' and "
-					  if (movieTitle.indexOf("\"") == -1){
-					  	 statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',:vID,:movieTitle,0,0,:movieTitle,:actualLink)');
-					  }else{
-						 statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + ",:vID,:movieTitle,0,0,:movieTitle,:actualLink)"); 
-					  }
-					  statement.params.vID = vID[5];
-					  statement.params.movieTitle = movieTitle;
-					  statement.params.actualLink = actualLink;
-					  statement.execute();
-					  statement.reset();
-				  }catch(err){
-					  dump("SQL error "+err+"\n");
-					  dump(vID[5]+"\n");
-					  dump(movieTitle+"\n");
-					  dump(actualLink+"\n");
-				  }
-				}
+				// var check2 = mDBConn.createStatement("SELECT vid FROM onpage WHERE vid=" + vID[5]);
+				// dump("sql2 done \n");
+				// var id2 = 0;
+				// dump("checking sql2 \n");
+				// try{
+				// while(check2.executeStep()){
+				// 	id2 = check2.getString(0);
+				// 	//dump(id+"\n");
+				// }
+				// }finally{
+				// check.reset();
+				// }
+				// dump("done checking sql "+id+"\n");
+				// if (id == 0 && id2 == 0) {
+				//   var statement;
+				//   try{
+				// 	  //dump("index of" + movieTitle.indexOf("\"")+"\n");
+				// 	  //doesnt work. for switching between strings with ' and "
+				// 	  if (movieTitle.indexOf("\"") == -1){
+				// 	  	 statement = mDBConn.createStatement('INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(' + null + ',:vID,:movieTitle,0,0,:movieTitle,:actualLink)');
+				// 	  }else{
+				// 		 statement = mDBConn.createStatement("INSERT INTO onpage(pid,vid,title,season,ep,name,url) VALUES(" + null + ",:vID,:movieTitle,0,0,:movieTitle,:actualLink)"); 
+				// 	  }
+				// 	  statement.params.vID = vID[5];
+				// 	  statement.params.movieTitle = movieTitle;
+				// 	  statement.params.actualLink = actualLink;
+				// 	  statement.execute();
+				// 	  statement.reset();
+				//   }catch(err){
+				// 	  dump("SQL error "+err+"\n");
+				// 	  dump(vID[5]+"\n");
+				// 	  dump(movieTitle+"\n");
+				// 	  dump(actualLink+"\n");
+				//   }
+				// }
 					  dump("SQL dump \n");
 					  dump(vID[5]+"\n");
 					  dump(movieTitle+"\n");
@@ -703,196 +849,135 @@ var netflixRandomizer = function () {
 			dump("Done scanning bob! \n");
 			//alert("Done scanning page!");
 		},
-		
-		addToPlaylist : function (elm) {
-			//dump("adding to playlist \n");
 
-			var episodeLink, episodeID, episodeName, episodeNum;
+		scanSeasons : function ()
+		{
+			var seasonList = content.document.getElementById("seasonsNav");
+			var firstItem = seasonList.children[0];
+			var link = firstItem.children[0].click();
+		},
 
-			episodeID = elm.getAttribute("data-episodeid");
-			episodeNum = elm.getAttribute("seqNum");
-			episodeName = elm.getAttribute("episodeTitle");
-			episodeLink = elm.getAttribute("episodeLink");
+		// --- ###### --- Misc. --- ###### ---
 
-			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
-			var mDBConn = Services.storage.openDatabase(file);
-
-			var titles = content.document.getElementsByClassName("title");
-			var title;
-			for (var i = 0; i < titles.length; i++) {
-				if (titles[i].tagName == "H1" && titles[i].innerHTML.length > 0)
-				{
-					title = titles[i].innerHTML;
-				}
-			}
-			var season = content.document.getElementsByClassName("selectorTxt")[0].innerHTML;
-			
-			
-			try{
-				mDBConn.executeSimpleSQL('INSERT INTO playlist(pid,vid,title,season,ep,name,url,watched) VALUES(' + null + ',' + episodeID + ',"' + title + '",' + season + ',' + episodeNum + ',"' + episodeName + '","' + episodeLink + '",0)');
-			}catch(err){
-				dump("add to playlist error: "+err+"\n");	
-			}
-
-			mDBConn.close();
-			
-			// alert("Added " + title + " " + episodeName + " to playlist!");
-
+		updateSidebar : function(elm) {
 			var evt = document.createEvent("Events");
 			evt.initEvent("UpdateSidebar", true, false);
 			elm.dispatchEvent(evt);
-
-		},
-		
-		playPlaylist : function (vid) {
-			dump("starting playlist with vid:"+vid+"\n");
-			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
-			var mDBConn = Services.storage.openDatabase(file);
-			try{
-			var check = mDBConn.createStatement("SELECT * FROM status WHERE id=1");
-				var playing = 0;
-				var pvid = 0;
-				try{
-				check.executeStep();
-					playing = check.getString(1);
-					pvid = check.getString(3);
-					dump("pvid = "+pvid+"\n");
-				
-				}finally{
-					check.reset();
-				}
-				
-				if (vid != pvid){
-					var getURL = mDBConn.createStatement("SELECT vid,url FROM playlist");
-					try{
-					while(getURL.executeStep()){
-						if (getURL.getString(0) == pvid){
-							break;
-						}
-					}
-					getURL.executeStep();
-					var purl = getURL.getString(1);
-					dump("playing "+purl+" "+getURL.getString(0)+"\n");
-	
-					mDBConn.executeSimpleSQL("UPDATE status SET playing=1, cvid="+ getURL.getString(0) +" WHERE id=1");
-				}catch(error){
-						dump("SQL playlist error: "+error+"\n");
-					}
-					getURL.reset();
-					mDBConn.asyncClose();
-					openUILinkIn(purl, "current", false);
-				}else{
-					mDBConn.asyncClose();
-				}
-			}catch(err){
-				dump("Play playlist error "+err+"\n");	
-			}
-
 		},
 				
 		onPageLoad: function(aEvent) {
+			dump("netflixRandomizer page did load \n")
 	  		var doc = aEvent.originalTarget; // doc is document that triggered the event
 			var win = doc.defaultView; // win is the window for the doc
 			// test desired conditions and do something
 			// if (doc.nodeName == "#document") return; // only documents
 			// if (win != win.top) return; //only top window.
 			// if (win.frameElement) return; // skip iframes/frames
-			pathArray = win.location.href.split( '/' );
-			protocol = pathArray[0];
-			host = pathArray[2];
 
-			if (host != "www.netflix.com") return;
+			var pathArray = win.location.href.split( '/' );
+			var protocol = pathArray[0];
+			var host = pathArray[2];
+			dump("host: "+host+"\n");
+			if (host != "www.netflix.com" && host != "netflixrandomizer") return;
 
 			netflixRandomizer.insertCSS();
 			netflixRandomizer.insertGlobalElements();
 
-			if (!win.frameElement)  {
-				var autoRun = prefManager.getBoolPref("extensions.netflixrandomizer.autorun");
-					if (autoRun) {
-						//netflixRandomizer.run();
-					}
-				var checkElement = doc.getElementsByTagName("body")[0];
-				var eid = checkElement.getAttribute("id");
-				
-				if (eid == "page-WiMovie"){
-					dump("Is WiMovie");
-					netflixRandomizer.insertPageElements();
-					netflixRandomizer.scanPage();
-					
-					win.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
-					  // select the target node
-					var target = doc.querySelector('.ajaxLoading');
-					dump("Creating observer");
-					  // create an observer instance
-					var observer = new MutationObserver(function(mutations) {
-						mutations.forEach(function(mutation) {
-							dump("mutation "+mutation.type+" "+scanBobCount+"\n");	  
-						});
-						//setTimeout(function() {
-						if (scanBobCount >= 1){
-							toggleSidebar();
-							netflixRandomizer.scanPage();
-							toggleSidebar('viewNRSidebar',true);
-							scanBobCount = 0;
-						}else{
-							scanBobCount++;
-						}
-								//}, 100);
-					});
-					   
-					  // configuration of the observer:
-					var config = { attributes: true, childList: true, characterData: true }
-					   
-					  // pass in the target node, as well as the observer options
-					observer.observe(target, config);
-				  
-				}else if (eid == "page-WiPlayer"){
-					//dump(gup('movieid',doc.location.href)+"\n");
-					dump("on player page LOAD\n")
-					toggleSidebar();
-					dump("closed sidebar\n");
-					toggleSidebar('viewNRSidebar',true);
-					dump("opened sidebar\n");
-					netflixRandomizer.playPlaylist(gup('movieid',doc.location.href));
-				}else if(eid == "page-WiHome"){
-					netflixRandomizer.insertHomeElements();
-
-					//netflixRandomizer.scanHome();
-					netflixRandomizer.getCats();
-					var allowHomeScan = prefManager.getBoolPref("extensions.netflixrandomizer.homescan");
-					if (allowHomeScan){
-						//
-						// SCAN HOME PAGE
-						//
-						aEvent.originalTarget.defaultView.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
-						// select the target node
-						var target = doc.querySelector('#BobMovie');
-						dump("got target "+target+"\n");
-
-						// create an observer instance
-						var observer = new MutationObserver(function(mutations) {
-						  mutations.forEach(function(mutation) {
-							  dump("mutation "+mutation.type+"\n");
-							  
-						  });
-
-						netflixRandomizer.scanBob();
-						});
-
-						// configuration of the observer:
-						var config = { attributes: true, childList: true, characterData: true }
-
-						// pass in the target node, as well as the observer options
-						observer.observe(target, config);					
-					}
-				}//end if allow home scan
-				//updatePage();
-				//alert("page is loaded : " +doc.location.href + "\n");
-			}else{
-				//if iFrame
-				//alert("iframe is loaded \n" +doc.location.href);
+			if (host == "netflixrandomizer") {
+				netflixRandomizer.constructPlaylist();
+				return;
 			}
+
+			var autoRun = prefManager.getBoolPref("extensions.netflixrandomizer.autorun");
+				if (autoRun) {
+					//netflixRandomizer.run();
+				}
+			var checkElement = doc.getElementsByTagName("body")[0];
+			var eid = checkElement.getAttribute("id");
+			dump("eid:"+eid+"\n");
+			if (eid == "page-WiMovie"){
+				dump("Is WiMovie");
+				netflixRandomizer.insertPageElements();
+				// netflixRandomizer.scanPage();
+				
+				  // select the target node
+				var target = doc.querySelector('.ajaxLoading');
+				dump("Creating observer");
+				  // create an observer instance
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+						dump("mutation "+mutation.type+" "+scanBobCount+"\n");	  
+					});
+					//setTimeout(function() {
+					if (scanBobCount >= 1){
+						netflixRandomizer.insertPageElements();
+						// netflixRandomizer.scanPage();
+						scanBobCount = 0;
+					}else{
+						scanBobCount++;
+					}
+							//}, 100);
+				});
+				   
+				  // configuration of the observer:
+				var config = { attributes: true, childList: true, characterData: true }
+				   
+				  // pass in the target node, as well as the observer options
+				observer.observe(target, config);
+			  
+			}else if (eid == "page-WiPlayer"){
+				dump("is player \n");
+				if (gup('playlist',doc.location.href) > 0){
+					dump("Starting to set as playing");
+					netflixRandomizer.setVideoIsPlaying(gup('pid',doc.location.href),gup('vid',doc.location.href));
+				}
+			}else if(eid == "page-WiHome"){
+				netflixRandomizer.insertHomeElements();
+
+				//netflixRandomizer.scanHome();
+				// netflixRandomizer.getCats();
+				var allowHomeScan = prefManager.getBoolPref("extensions.netflixrandomizer.homescan");
+				if (allowHomeScan){
+					//
+					// SCAN HOME PAGE
+					//
+					// select the target node
+					var target = doc.querySelector('#BobMovie');
+					dump("got target "+target+"\n");
+
+					// create an observer instance
+					var observer = new MutationObserver(function(mutations) {
+					  mutations.forEach(function(mutation) {
+						  dump("mutation "+mutation.type+"\n");
+						  
+					  });
+
+					// netflixRandomizer.scanBob();
+					});
+
+					// configuration of the observer:
+					var config = { attributes: true, childList: true, characterData: true }
+
+					// pass in the target node, as well as the observer options
+					observer.observe(target, config);					
+				}
+			}//end if allow home scan
+
+			win.addEventListener("beforeunload", function(event){ netflixRandomizer.onBeforePageUnload(event); }, true);
+			win.addEventListener("unload", function(event){ netflixRandomizer.onPageUnload(event); }, true);
+			// doc.addEventListener("mediaplaybackstarted", function(event){ netflixRandomizer.playbackStarted(event); }, true);
 		},
+
+		onBeforePageUnload : function (aEvent) {
+		  	var doc = aEvent.originalTarget; // doc is document that triggered the event
+			var win = doc.defaultView; // win is the window for the doc
+			// alert("Before Page unload "+win.location.href);
+		},
+
+		playbackStarted : function (aEvent) {
+			alert("Playback Started");
+		},
+
 		onPageUnload: function(aEvent) {
 		  		var doc = aEvent.originalTarget; // doc is document that triggered the event
 				var win = doc.defaultView; // win is the window for the doc
@@ -963,8 +1048,26 @@ var myListener = {
 //        }
     },
  
-    onLocationChange: function(aProgress, aRequest, aURI) {
+    onLocationChange : function(aProgress, aRequest, aURI) {
+    	// This fires when the location bar changes; that is load event is confirmed
+        // or when the user switches tabs. If you use myListener for more than one tab/window,
+        // use aProgress.DOMWindow to obtain the tab/window which triggered the change.
+        // alert("location change "+aURI.spec.toString(0)+"\n");
 
+		var checkElement = content.document.getElementsByTagName("body")[0];
+		var eid = checkElement.getAttribute("id");
+		dump("on location "+aURI.spec.toString(0)+"\n");
+		if (eid == "page-WiMovie"){
+			
+			// netflixRandomizer.scanPage();
+		}else if (eid == "page-WiPlayer"){
+			//dump(gup('movieid',doc.location.href)+"\n");
+			//dump("on player page DO SOMETHING:\n")
+			if (gup('playlist',aURI.spec.toString(0)) > 0){
+				netflixRandomizer.playPlaylist(gup('pid',aURI.spec.toString(0)));
+			}
+
+		}
     },
  
     // For definitions of the remaining functions see related documentation
@@ -976,12 +1079,33 @@ var myListener = {
 function handleClickEvent(e) {
 	var target = e.target;
 
-	// alert(target.className);
+	// alert(target.getAttribute("id"));
 
-	if (target.className == "addBtn") {
-		netflixRandomizer.addToPlaylist(target);
-		// alert("Added");
+	var checkElement = content.document.getElementsByTagName("body")[0];
+	var eid = checkElement.getAttribute("id");
+	
+	if (eid == "page-WiMovie"){
+		if (target.className == "addBtn") {
+			netflixRandomizer.addToPlaylist(target);
+			// alert("Added");
+		}
+		if (target.getAttribute("id") == "shufflePlaylist") {
+			netflixRandomizer.scanSeasons();
+		}
 	}
+	else if (eid == "page-WiHome") {
+
+	}
+	else if (eid == "page-WiPlayer") {
+		
+	}
+	else if (eid == "page-WiPlaylist") {
+		if (target.getAttribute("id") == "shuffle"){
+			netflixRandomizer.shufflePlaylist();
+		}
+	}
+
+
 
 	if (target.getAttribute("id") == "showPlaylist") {
 		netflixRandomizer.showPlaylist();
