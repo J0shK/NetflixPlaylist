@@ -3,15 +3,49 @@
     <head>
         <link href="http://cdn-0.nflximg.com/en_US/icons/nficon2014.4.ico" rel="shortcut icon">
 
+        <script src="jquery-2.1.3.min.js"></script>
+        <script src="jquery-ui.min.js"></script>
 
         <title>My Playlist | Netflix</title>
 
         <link href="http://cdn3.nflxext.com/FilePackageGetter/sharedSystem/pkg-nflxrsrc-70000082180100000000022d0d61a8a0184c30c8a90864434e2400820105223009ee0030-1418857968-15-15.css?v=15&amp;r=us-west-2" type="text/css" rel="stylesheet">
         <link id="netflix-randomizer-style" type="text/css" rel="stylesheet" href="chrome://netflixrandomizer/skin/skin.css">
 
+        <script>
+            $(function() {
+                var playlistList = $("#playlistList");
+                playlistList.sortable({
+                    placeholder: "nr-playlist-placeholder"
+                });
+                playlistList.disableSelection();
+
+
+                playlistList.sortable({
+                    stop: function( event, ui ) { 
+                        dump("original position: "+ui.originalPosition+" new position: "+ui.position);
+                    }
+                });
+
+                playlistList.sortable({
+                    stop: function(event, ui) {
+                        $("#playlistList li").each(function(i, el){
+                            var p = $(el).attr("id");
+                            dump(p+"\n");
+                        });
+
+                        var evt = document.createEvent("Events");
+                        evt.initEvent("NRSortStop", true, false);
+                        document.dispatchEvent(evt);
+                    }
+                });
+                // $( "#playlistList" ).on( "sortstop", function( event, ui ) {  } );
+            });
+        </script>
+
     </head>
 
 <body class="ua-not-ie ua-firefox ua-firefox-new le-gecko headerPreparer sc-wn sc-strm os-mac os-mac-x struts global-header profiles" id="page-WiPlaylist">
+
         <div class="" id="doc2">
             <div class="svfDoc">
                 <div class="" id="contentWrap2014">
@@ -21,7 +55,7 @@
                             <ul class="global-header-wrap i-b notDvdOnly" id="global-header">
                                 <li class="nav-genres nav-item dropdown-trigger" id="nav-edgenre">
                                     <span class="i-b content">
-                                        <a href="http://www.netflix.com/WiHome?lnkctr=mhWN">Browse</a>
+                                        <a href="http://www.netflix.com/WiHome">Browse</a>
                                             <span class="right-arrow"></span>
                                     </span>
                                     <span class="i-b shim"></span>
@@ -64,15 +98,12 @@
 
 
 <div class="showTab" id="searchWrapper">
-    
-        <div class="nav-item" id="searchTab">
-            <a href="javascript:void(0)">
-                <span class="searchSprite search-icon "></span>
-                <div class="content">Search</div>
-            </a>
-        </div>
-    
-
+    <div class="nav-item" id="searchTab">
+        <a href="javascript:void(0)">
+            <span class="searchSprite search-icon "></span>
+            <div class="content">Search</div>
+        </a>
+    </div>
     <div class="productized no-display" id="global-search-form">
         <form name="search" id="global-search" action="http://www.netflix.com/WiSearch">
             <div>
@@ -89,20 +120,12 @@
         </form>
     </div>
 </div>
-
-                
-            
-            
-        
-
-    </div>
+</div>
 </div>
 
 
 
-
-
-                        
+                     
 </div>
     <div id="postHeaderWrap2014">
     <div id="fground">
@@ -117,8 +140,8 @@
             <div id="displaypage-body">
                 
                     <div id="displaypage-overview-container">
-                        <button id="shuffle" class="cta-button">Shuffle</button>
                         <button id="play" class="cta-button">Play</button>
+                        <button id="shuffle" class="cta-button">Shuffle</button>
                         <button id="clear" class="cta-button">Clear</button>
                     </div>
                 
@@ -126,6 +149,12 @@
 
                 <div class=" " id="displaypage-content">
                     <div class="clearfix">
+                        <div id="playistList-Header">
+                            <div class="episode">#</div>
+                            <div class="season">Season</div>
+                            <div class="episode-name">Title</div>
+                            <div class="title">Series</div>
+                        </div>
                         <ul id="playlistList">
 
                         </ul>

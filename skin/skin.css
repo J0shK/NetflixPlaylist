@@ -63,13 +63,14 @@
     float: left;
     font-size: 25px;
     line-height: 25px;
-    margin-left: 15px;
-    margin-right: 10px;
+    /*margin-left: 15px;
+    margin-right: 10px;*/
     min-height: 25px;
     padding-left: 5px;
     padding-right: 5px;
     text-align: center;
     width: 18px;
+    cursor: pointer;
 
     background: url("chrome://netflixrandomizer/skin/addButton.png") no-repeat scroll -2px 0px rgba(0, 0, 0, 0);
 }
@@ -80,7 +81,7 @@
 
 
 .cta-button {
-    background: url("http://cdn-0.nflximg.com/en_us/facebook/social_mountain_sprite.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
     border: 1px solid #b3b3b3;
     border-radius: 4px;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
@@ -90,16 +91,154 @@
     font-size: 116%;
     font-weight: bold;
     padding: 6px 15px 6px 33px;
+    margin-left: 25px;
+    margin-top: 17px;
 }
 
 .cta-button:hover {
-    background: url("http://cdn-0.nflximg.com/en_us/facebook/social_mountain_sprite.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 1px rgba(1, 1, 1, 0.3);
 }
 
-.netflix-randomizer-page-button {
+.cta-button:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    color: #4b4b4b;
+}
+
+#shuffle {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 7px 7px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+#shuffle:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 7px 7px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+#shuffle:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 7px 7px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+#play {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -18px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);    
+}
+
+#play:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -18px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);    
+}
+
+#play:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -18px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);    
+}
+
+#clear {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -43px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+#clear:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -43px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+#clear:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -43px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.nr-bob-button {
+    border: 1px solid #b3b3b3;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    color: #191919;
+    cursor: pointer;
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 5px;
+    min-width: 115px;
+    padding: 4px 10px 4px 32px;
+    text-align: left;
+    width: 100%;
+}
+
+.nr-bob-button:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -70px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 1px rgba(1, 1, 1, 0.3);
+}
+
+.nr-bob-button:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 9px -145px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    color: #4b4b4b;
+}
+
+#nrAddButtonList li {
+    height: 33px;
+}
+
+#nr-add-to-playlist {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 7px -70px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);   
+}
+
+#nr-add-to-playlist:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 7px -70px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);   
+}
+
+#nr-add-to-playlist:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 7px -70px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.nr-page-content-header-button {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px 7px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    border: 1px solid #b3b3b3;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    color: #191919;
+    cursor: pointer;
+    font-size: 116%;
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding: 6px 15px 6px 33px;
+    text-align: left;
+    width: 65%;
+}
+
+.nr-page-content-header-button:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 1px rgba(1, 1, 1, 0.3);
+}
+
+.nr-page-content-header-button:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -142px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    color: #4b4b4b;
+}
+
+.actions #playPlaylist {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -17px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    margin-left: -5px;
+}
+
+.actions #playPlaylist:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -17px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.actions #playPlaylist:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -17px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.actions #shufflePlaylist {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px 7px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.actions #shufflePlaylist:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px 7px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.actions #shufflePlaylist:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px 7px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
+.nr-page-button {
     background-color: #e7e7e7;
-    background-image: -moz-linear-gradient(center bottom , #e7e7e7, #ffffff);
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 10px -69px, -moz-linear-gradient(center bottom , #e7e7e7, #ffffff) repeat scroll 0 0 rgba(0, 0, 0, 0);
     border: 1px solid #959595;
     border-radius: 3px;
     box-shadow: 0 0 8px 0 #ccc;
@@ -107,37 +246,121 @@
     font-size: 13px;
     font-weight: bold;
     margin-left: 12px;
-    padding: 5px;
+    padding: 5px 5px 5px 34px;
     text-align: center;
     width: auto;
+    cursor: pointer;
 }
 
-.netflix-randomizer-page-button:hover {
+.nr-page-button:hover {
     box-shadow: none;
 }
 
 #displaypage-content {
     margin: 0 auto;
     width: 1000px;
+    color: #555;
+    font-family: arial,sans-serif;
+    font-size: 14px;
+}
+
+#playistList-Header div {
+    background-color: #f7f7f7;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 3px;
+    padding-left: 6px;
 }
 
 #playlistList li span {
-    float: left;
-    display: block;
+    display: inline-block;
+    font-size: 14px;
+    overflow: hidden;
+    padding: 5px;
     text-align: left;
 }
+
+#playlistList li:hover {
+    background-color: #f7f7f7;
+}
+
+#playlistList li a {
+    color: #555;
+}
+
+#playlistList li a:hover {
+    color: #ae1d00;
+}
+
 #playlistList, #playlistList li {
-    width: 77%;
+    padding-left: 4px;
+    padding-top: 5px;
+    width: 100%;
 }
-#playlistList .episode-name {
-    width: 45%;
+
+#playistList-Header .episode-name, #playlistList .episode-name {
+    width: 41%;
 }
-#playlistList .episode {
+
+#playistList-Header .episode, #playlistList .episode {
     width: 5%;
 }
-#playlistList .title {
-    width: 45%;
+
+#playistList-Header .title, #playlistList .title {
+    width: 40%;
 }
-#playlistList .season {
+
+#playistList-Header .season, #playlistList .season {
     width: 5%;
+}
+
+.nr-playlist-placeholder {
+    display: inline-block;
+    height: 25px;
+    /*background-color: rgba(174, 29, 0, 0.20);*/
+    border: 1px #ae1d00;
+    border-style: dashed;
+    padding: 10px;
+    margin-left: -6px;
+}
+
+#delete-button {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -45px, -moz-linear-gradient(center top , #e5e5e5 0%, #cbcbcb 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    border: 1px solid #b3b3b3;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    clear: left;
+    color: #191919;
+    cursor: pointer;
+    display: inline-block;
+    height: 26px;
+    width: 4%;
+}
+
+#delete-button:hover {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -45px, -moz-linear-gradient(center top , #ffffff 0%, #e5e5e5 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 1px rgba(1, 1, 1, 0.3);
+}
+
+#delete-button:active {
+    background: url("chrome://netflixrandomizer/skin/playlist-page-icons.png") no-repeat scroll 12px -45px, -moz-linear-gradient(center top , #cbcbcb 0%, #b3b3b3 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+    color: #4b4b4b;
+}
+
+
+#nr-notification-add {
+    background-color: rgba(174, 29, 0, 0.50);
+    width: 100%;
+    padding: 15px;
+    border-radius: 0px 0px 10px 10px;
+    box-shadow: 0px 1px 3px;
+    font-size: 25px;
+    text-align: center;
+    display: none;
+}
+
+#nr-notification-add .hidden {
+    display: none;
 }

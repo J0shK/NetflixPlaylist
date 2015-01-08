@@ -163,17 +163,102 @@ var netflixRandomizer = function () {
 
 		},
 
-		insertPageElements : function () {
-			var episodeList = content.document.getElementById("episodeColumn").getElementsByClassName("episodeList")[0].getElementsByTagName("li");
-			
-			for (var i = episodeList.length - 1; i >= 0; i--) {
+		insertBobElements : function () {
+			var bobMovie = content.document.getElementById("BobMovie");
+			// var bobContent = bobMovie.children[1];
+			// var bobContentWrapper = bobContent.children[0];
+			// var bobWrapper = bobContentWrapper.children[0];
+			// var bobMovieContent = bobWrapper.children[1];
+			// var midBob = bobMovieContent.children[2];
+			// var bobMovieActions = midBob.children[1];
 
+			var bobMovieActions = content.document.getElementsByClassName("bobMovieActions")[0];
+			var rating = bobMovie.getElementsByClassName("mpaaRating")[0];
+			var ratingString = rating.getAttribute("class");
+
+			var tvMatch = (ratingString.match(/TV/g) || []).length;
+
+			if (bobMovieActions.children.length <= 1 && tvMatch < 1) {
+				var recommendButton = bobMovieActions.children[0];
+
+				var addButton = content.document.createElement("button");
+				addButton.setAttribute("id","nr-add-to-playlist");
+				addButton.setAttribute("class","nr-bob-button");
+				addButton.innerHTML = "Add To Playlist";
+
+				bobMovieActions.insertBefore(addButton, recommendButton);
+			}
+			
+		},
+
+		insertPageElements : function () {
+			//Header
+			var header = content.document.getElementById("hd");
+			var addNotif = content.document.createElement("div");
+			addNotif.setAttribute("id","nr-notification-add");
+			// addNotif.setAttribute("style","opacity:0.0")
+			addNotif.innerHTML = "Added video to playlist!";
+			header.appendChild(addNotif);
+
+			//Content Feature
+			var actionsElement = content.document.getElementsByClassName("actions")[0];
+			var firstButton = actionsElement.children[1];
+
+			if (firstButton.getAttribute("id") != "playPlaylist") {
+				var playButton = content.document.createElement("button");
+				playButton.setAttribute("id", "playPlaylist");
+				playButton.setAttribute("class", "nr-page-content-header-button");
+				playButton.innerHTML = "Play Series";
+				actionsElement.insertBefore(playButton, firstButton);
+
+				var shuffleButton = content.document.createElement("button");
+				shuffleButton.setAttribute("id", "shufflePlaylist");
+				shuffleButton.setAttribute("class", "nr-page-content-header-button");
+				shuffleButton.innerHTML = "Shuffle Series";
+				actionsElement.insertBefore(shuffleButton, firstButton);
+			}
+
+			//Episode List Header
+			var bodyContent = content.document.getElementById("displaypage-bodycontent");
+			var actualContent = bodyContent.children[0];
+			var seasonSelector = actualContent.children[0];
+			var pin = actualContent.children[1];
+
+			if (pin.getAttribute("id") != "addSeason") {
+				var addSeasonButton = content.document.createElement("button");
+				addSeasonButton.setAttribute("id", "addSeason");
+				addSeasonButton.setAttribute("class", "nr-page-button");
+				addSeasonButton.innerHTML = "Add Season";
+				actualContent.insertBefore(addSeasonButton, pin);
+
+				var addSeriesButton = content.document.createElement("button");
+				addSeriesButton.setAttribute("id", "addSeries");
+				addSeriesButton.setAttribute("class", "nr-page-button");
+				addSeriesButton.innerHTML = "Add Series";
+				actualContent.insertBefore(addSeriesButton, pin);
+			}
+
+			//Episode List
+			var episodeColumn = content.document.getElementById("episodeColumn");
+			var episodeListUL = episodeColumn.getElementsByClassName("episodeList")[0];
+			episodeListUL.setAttribute("style","width: 95%; float: left;");
+
+			var episodeList = episodeListUL.getElementsByTagName("li");
+
+			var addButtonList = content.document.createElement("ul");
+			addButtonList.setAttribute("style","width: 5%; float: left;");
+			addButtonList.setAttribute("id","nrAddButtonList");
+
+			for (var i = 0; i < episodeList.length; i++) {
 				if (episodeList[i].getElementsByClassName("addBtn").length < 1) {
+
+					var addButtonListLi = content.document.createElement("li");
+
 					// var playButton = episodeList[i].getElementsByClassName("playBtn")[0];
 					var titleElement = episodeList[i].getElementsByClassName("episodeTitle")[0];
 
-					var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
-					var mDBConn = Services.storage.openDatabase(file);
+					// var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+					// var mDBConn = Services.storage.openDatabase(file);
 
 					var element = content.document.createElement("span");
 					element.setAttribute("class", "addBtn");
@@ -183,36 +268,20 @@ var netflixRandomizer = function () {
 					element.setAttribute("episodeTitle", episodeList[i].getElementsByClassName("episodeTitle")[0].innerHTML);
 					element.setAttribute("episodeLink", episodeList[i].getElementsByClassName("playBtn")[0].getElementsByTagName("a")[0].getAttribute("href"));
 					// element.innerHTML = "+";
-					episodeList[i].insertBefore(element, titleElement);
+					// episodeList[i].insertBefore(element, titleElement);
+					addButtonListLi.appendChild(element);
+					addButtonList.appendChild(addButtonListLi);
+
 
 					//Remove all event listeners
-					var el = episodeList[i],
-					    elClone = el.cloneNode(true);
-
-					el.parentNode.replaceChild(elClone, el);
-					}
-					// episodeList[i].addEventListener('click', function() { var addToPlaylistEvent = new Event('AddToPlaylistEvent'); this.dispatchEvent(addToPlaylistEvent); alert("Done!");}, false);
+					// var el = episodeList[i],
+					//     elClone = el.cloneNode(true);
+					// el.parentNode.replaceChild(elClone, el);
+				}
+					// episodeList[i].addEventListener('click', function() { var addToPlaylistEvent = new Event('AddToPlaylistEvent'); this.dispatchEvent(addToPlaylistEvent); alert("Done!");}, false);	
 			};
 
-
-			var bodyContent = content.document.getElementById("displaypage-bodycontent");
-			var actualContent = bodyContent.children[0];
-			var seasonSelector = actualContent.children[0];
-			var pin = actualContent.children[1];
-
-			if (pin.getAttribute("id") != "playPlaylist") {
-				var playButton = content.document.createElement("button");
-				playButton.setAttribute("id", "playPlaylist");
-				playButton.setAttribute("class", "netflix-randomizer-page-button");
-				playButton.innerHTML = "Play Series";
-				actualContent.insertBefore(playButton, pin);
-
-				var shuffleButton = content.document.createElement("button");
-				shuffleButton.setAttribute("id", "shufflePlaylist");
-				shuffleButton.setAttribute("class", "netflix-randomizer-page-button");
-				shuffleButton.innerHTML = "Shuffle Series";
-				actualContent.insertBefore(shuffleButton, pin);
-			}
+			episodeColumn.insertBefore(addButtonList, episodeListUL);
 
 		},
 
@@ -254,7 +323,8 @@ var netflixRandomizer = function () {
 			var i = 1;
 			try{
 				while(statement.executeStep()){
-					var vid = statement.getString(1)
+					var pid = statement.getString(0);
+					var vid = statement.getString(1);
 					var video = mDBConn.createStatement("SELECT * FROM video WHERE id="+vid);
 					video.executeStep();
 					var name = video.getString(5);
@@ -263,7 +333,7 @@ var netflixRandomizer = function () {
 
 					var li = content.document.createElement("li");
 
-					li.setAttribute("id",video.getString(0));
+					li.setAttribute("id",pid);
 					li.setAttribute("vid",video.getString(1));
 					//for styling
 						if (statement.getString(2) == 1){
@@ -279,6 +349,11 @@ var netflixRandomizer = function () {
 					l1.innerHTML = video.getString(4);
 	        		linkElement.appendChild(l1);
 
+	        		var l4 = content.document.createElement("span");
+					l4.setAttribute("class", "season"); //season
+					l4.innerHTML = video.getString(3);
+	        		linkElement.appendChild(l4);
+
 	        		var l2 = content.document.createElement("span");
 					l2.setAttribute("class","episode-name"); // episode title
 					l2.innerHTML = name;
@@ -289,12 +364,19 @@ var netflixRandomizer = function () {
 					l3.innerHTML = video.getString(2);
 	        		linkElement.appendChild(l3);
 
-	        		var l4 = content.document.createElement("span");
-					l4.setAttribute("class", "season"); //season
-					l4.innerHTML = video.getString(3);
-	        		linkElement.appendChild(l4);
-
 	        		li.appendChild(linkElement);
+
+	        		var deleteButtonLink = content.document.createElement("a");
+	        		deleteButtonLink.setAttribute("id","delete-playlist-item");
+	        		deleteButtonLink.setAttribute("href","javascript:void(0)");
+
+	        		var deleteButton = content.document.createElement("div");
+	        		deleteButton.setAttribute("id","delete-button");
+	        		deleteButton.setAttribute("pvid",pid);
+
+	        		deleteButtonLink.appendChild(deleteButton);
+	        		li.appendChild(deleteButtonLink);
+
 					playlistList.appendChild(li);
 					i++;
 					video.reset();
@@ -306,6 +388,12 @@ var netflixRandomizer = function () {
 			}
 			//dump("END playlist update \n");
 			mDBConn.close();
+
+
+			// //Make sortable
+			// dump("Attempting to make sortable \n");
+   //          $( "#playlistList" ).sortable();
+   //          $( "#playlistList" ).disableSelection();
 		},
 
 		currentPlaylistId: function (conn) {
@@ -386,6 +474,13 @@ var netflixRandomizer = function () {
 
 			return name;
 		},
+
+		addSeasonToPlaylist : function () {
+			var episodes = content.document.getElementsByClassName("addBtn");
+			for (var i = 0; i < episodes.length; i++) {
+				netflixRandomizer.addToPlaylist(episodes[i]);
+			};
+		},
 		
 		addToPlaylist : function (elm) {
 			//dump("adding to playlist \n");
@@ -431,7 +526,23 @@ var netflixRandomizer = function () {
 			mDBConn.close();
 			
 			// alert("Added " + title + " " + episodeName + " to playlist!");
-			netflixRandomizer.updateSidebar(elm);
+			var notification = content.document.getElementById("nr-notification-add");
+			notification.innerHTML = "Added <b>"+episodeName+"</b>";
+
+			// setTimeout(function(){
+			// 	var notification = content.document.getElementById("nr-notification-add");
+			// 	notification.setAttribute("class","hidden");
+			// }, 1000);
+
+			// $( "#nr-notification-add" ).animate({
+			//     style: "opacity:1.0"
+			//   }, 2000, function() {
+			//     // Animation complete.
+			// });
+
+			$( "#nr-notification-add" ).fadeIn( "slow");
+
+			netflixRandomizer.updateSidebar();
 		},
 
 		shufflePlaylist : function (pid) {
@@ -482,7 +593,10 @@ var netflixRandomizer = function () {
 			mDBConn.close();
 
 			// netflixRandomizer.constructPlaylist();
-			openUILinkIn(purl+"&playlist=1&pid=1&vid=1", "current", false);
+			if (purl) {
+				openUILinkIn(purl+"&playlist=1&pid=1&vid=1", "current", false);
+			}
+			
 		},
 
 		setVideoIsPlaying : function (pid,pvid) {
@@ -495,6 +609,72 @@ var netflixRandomizer = function () {
 				mDBConn.executeSimpleSQL("UPDATE "+ currentPlaylistName +" SET playing=1 WHERE id="+pvid);
 			}catch(error){
 				dump("SQL set playing error: "+error+"\n");
+			}
+
+			mDBConn.close();
+		},
+
+		resortPlaylist : function () {
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+
+			var playlistList = content.document.getElementById("playlistList");
+
+			var idList = new Array();
+			for (var i = 0; i < playlistList.children.length; i++) {
+				var id = playlistList.children[i].getAttribute("id");
+				idList.push(id);
+			};
+
+			var statement = mDBConn.createStatement("SELECT * FROM playlist");
+			//pid INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, title TEXT, season INTEGER, ep INTEGER, name TEXT, url TEXT, watched INTEGER
+			var playlist = new Array();
+			var i = 1;
+			try{
+				while(statement.executeStep()){
+					var video = new Array();
+					video["id"] = statement.getString(0);
+					video["vid"] = statement.getString(1);
+					video["playing"] = statement.getString(2);
+					// playlist.push(video);
+					playlist[statement.getString(0)] = video;
+					i++;
+				}
+			}finally{
+				statement.reset();
+			}
+
+			mDBConn.executeSimpleSQL("DROP TABLE IF EXISTS playlist");
+			mDBConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY AUTOINCREMENT, vid INTEGER, playing INTEGER)");
+
+			for (var i = 0; i < idList.length; i++) {
+				try{
+					mDBConn.executeSimpleSQL('INSERT INTO playlist(id,vid,playing) VALUES(' + null + ',' + playlist[idList[i]]["vid"] + ',"' + playlist[idList[i]]["playing"] + '")');
+				}catch(err){
+					dump("resort playlist error: "+err+"\n");	
+				}
+			}
+
+			mDBConn.close();
+
+			//Clear HTML list
+			var playlistList = content.document.getElementById("playlistList");
+
+			for (var i = playlistList.children.length - 1; i >= 0; i--) {
+				playlistList.children[i].remove();
+			};
+
+			netflixRandomizer.constructPlaylist();
+		},
+
+		deleteFromPlaylist : function(pvid) {
+			var file = FileUtils.getFile("ProfD", ["netflixrandomizer.sqlite"]);
+			var mDBConn = Services.storage.openDatabase(file);
+
+			try{
+				mDBConn.executeSimpleSQL("DELETE FROM playlist WHERE id="+pvid);
+			}catch(err){
+				dump("Error deleting playlist item "+err+"\n");
 			}
 
 			mDBConn.close();
@@ -944,7 +1124,7 @@ var netflixRandomizer = function () {
 		updateSidebar : function(elm) {
 			var evt = document.createEvent("Events");
 			evt.initEvent("UpdateSidebar", true, false);
-			elm.dispatchEvent(evt);
+			content.document.dispatchEvent(evt);
 		},
 				
 		onPageLoad: function(aEvent) {
@@ -1032,10 +1212,18 @@ var netflixRandomizer = function () {
 
 					// create an observer instance
 					var observer = new MutationObserver(function(mutations) {
-					  mutations.forEach(function(mutation) {
-						  dump("mutation "+mutation.type+"\n");
-						  
-					  });
+						// mutations.forEach(function(mutation) {
+						// 	dump("mutation "+mutation.type+" "+scanBobCount+"\n");	  
+						// });
+						// //setTimeout(function() {
+						// if (scanBobCount >= 1){
+						// 	setTimeout(function(){netflixRandomizer.insertBobElements();}, 4000);
+						// 	scanBobCount = 0;
+						// }else{
+						// 	scanBobCount++;
+						// }
+
+						netflixRandomizer.insertBobElements();
 
 					// netflixRandomizer.scanBob();
 					});
@@ -1165,6 +1353,7 @@ function handleClickEvent(e) {
 	var target = e.target;
 
 	// alert(target.getAttribute("id"));
+	dump("clicked "+target.tagName+"\n");
 
 	var checkElement = content.document.getElementsByTagName("body")[0];
 	var eid = checkElement.getAttribute("id");
@@ -1198,6 +1387,17 @@ function handleClickEvent(e) {
 		}
 		if (target.getAttribute("id") == "clear") {
 			netflixRandomizer.resetPlaylist();
+
+			//Clear HTML list
+			var playlistList = content.document.getElementById("playlistList");
+
+			for (var i = playlistList.children.length - 1; i >= 0; i--) {
+				playlistList.children[i].remove();
+			};
+		}
+		if (target.getAttribute("id") == "delete-button") {
+			netflixRandomizer.deleteFromPlaylist(target.getAttribute("pvid"));
+			target.parentNode.parentNode.remove();
 		}
 	}
 
@@ -1209,6 +1409,7 @@ function handleClickEvent(e) {
 }
 
 document.addEventListener("click", function(e) { handleClickEvent(e); }, false, true);
+document.addEventListener("NRSortStop", function(e) { netflixRandomizer.resortPlaylist(); }, false, true);
 
 window.addEventListener("load", netflixRandomizer.init, false);
 window.addEventListener("unload", netflixRandomizer.uninit, false);
