@@ -1,4 +1,4 @@
-(function() {
+//(function() {
 
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource://gre/modules/NetUtil.jsm");
@@ -114,7 +114,8 @@ var netflixRandomizer = function () {
 			//open sidebar on init
 			//toggleSidebar('viewNRSidebar',true);
 
-			scanState = scanStateEnum.OFF;
+			//Set default
+			netflixRandomizer.setScanState(scanStateEnum.OFF);
 
 			dump("done init \n");
 		},
@@ -1514,4 +1515,4 @@ document.addEventListener("NRSortStop", function(e) { netflixRandomizer.resortPl
 window.addEventListener("load", netflixRandomizer.init, false);
 window.addEventListener("unload", netflixRandomizer.uninit, false);
 
-})();
+//})();
