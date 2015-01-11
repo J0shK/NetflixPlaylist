@@ -351,14 +351,14 @@
 
 
 #nr-notification-add {
-    background-color: rgba(174, 29, 0, 0.50);
-    width: 100%;
-    padding: 15px;
-    border-radius: 0px 0px 10px 10px;
-    box-shadow: 0px 1px 3px;
+    background-color: rgba(1, 128, 16, 0.6);
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 1px 3px;
+    color: white;
     font-size: 25px;
+    padding: 15px;
     text-align: center;
-    display: none;
+    width: 100%;
 }
 
 #nr-notification-add .hidden {

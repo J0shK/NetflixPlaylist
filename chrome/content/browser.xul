@@ -1,11 +1,8 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="resource://netflixrandomizer/skin/skin.css" type="text/css"?>
 <!DOCTYPE netflixrandomizer SYSTEM "chrome://netflixrandomizer/locale/translations.dtd">
-<overlay id="sample" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:HTML="http://www.w3.org/1999/xhtml">
+<overlay id="NetflixRandomizer" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:HTML="http://www.w3.org/1999/xhtml">
 
-		<script src="jquery-2.1.3.min.js"></script>
-        <script src="jquery-ui.min.js"></script>
-        
 		<script src="browserhelpers.js" />
 		<script src="netflixRandomizer.js" />
 
